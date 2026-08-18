@@ -1,0 +1,44 @@
+{
+  "name": "@recipe-finder/ui",
+  "version": "0.0.1",
+  "description": "Stencil UI library for Recipe Finder & Meal Planner",
+  "private": true,
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "collection": "dist/collection/collection-manifest.json",
+  "collection:main": "dist/collection/index.js",
+  "unpkg": "dist/recipe-ui/recipe-ui.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/recipe-ui/recipe-ui.esm.js",
+      "require": "./dist/recipe-ui/recipe-ui.cjs.js"
+    },
+    "./loader": {
+      "import": "./loader/index.js",
+      "require": "./loader/index.cjs",
+      "types": "./loader/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "loader/"
+  ],
+  "scripts": {
+    "build": "stencil build",
+    "start": "stencil build --dev --watch --serve",
+    "dev": "stencil build --dev --watch --serve",
+    "test": "stencil-test --prod",
+    "test:watch": "stencil-test --prod --watch",
+    "generate": "stencil generate"
+  },
+  "devDependencies": {
+    "@stencil/core": "^4.27.1 || ^5.0.0-0",
+    "@stencil/vitest": "^1.8.3",
+    "@types/node": "^22.13.5",
+    "@vitest/browser-playwright": "^4.0.0",
+    "playwright": "^1.52.0",
+    "vitest": "^4.0.0"
+  },
+  "license": "MIT"
+}
