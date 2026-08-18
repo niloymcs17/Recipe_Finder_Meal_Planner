@@ -7,14 +7,16 @@
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
     /**
-     * Placeholder stub so the library builds. Real components land in Phases 03–05.
+     * Throwaway smoke component so the library builds with zero feature components.
+     * Remove when Phase 04 adds real components.
      */
     interface RfStub {
     }
 }
 declare global {
     /**
-     * Placeholder stub so the library builds. Real components land in Phases 03–05.
+     * Throwaway smoke component so the library builds with zero feature components.
+     * Remove when Phase 04 adds real components.
      */
     interface HTMLRfStubElement extends Components.RfStub, HTMLStencilElement {
     }
@@ -28,7 +30,8 @@ declare global {
 }
 declare namespace LocalJSX {
     /**
-     * Placeholder stub so the library builds. Real components land in Phases 03–05.
+     * Throwaway smoke component so the library builds with zero feature components.
+     * Remove when Phase 04 adds real components.
      */
     interface RfStub {
     }
@@ -41,7 +44,8 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             /**
-             * Placeholder stub so the library builds. Real components land in Phases 03–05.
+             * Throwaway smoke component so the library builds with zero feature components.
+             * Remove when Phase 04 adds real components.
              */
             "rf-stub": LocalJSX.IntrinsicElements["rf-stub"] & JSXBase.HTMLAttributes<HTMLRfStubElement>;
         }

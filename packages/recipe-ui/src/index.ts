@@ -1,8 +1,15 @@
 /**
- * @fileoverview entry point for your component library
+ * Library source entry — types and shared utils.
  *
- * DO NOT use this file to export your components. Instead, use the recommended approaches
- * to consume components of this package as outlined in the package README.
+ * Custom element registration for consumers (Phase 06) comes from the build
+ * output, not this file:
+ *
+ *   import { defineCustomElements } from '@recipe-finder/ui/loader';
+ *   // or (dist-custom-elements bundle):
+ *   import { defineCustomElements } from '@recipe-finder/ui';
+ *
+ * Theme tokens: import '@recipe-finder/ui/global.css' (or override `--rf-*` on :root).
  */
 
 export type * from './components.d.ts';
+export { debounce } from './utils/debounce';

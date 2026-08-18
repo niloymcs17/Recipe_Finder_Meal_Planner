@@ -1,0 +1,78 @@
+/**
+ * @recipe-finder/ui theme tokens
+ *
+ * Single source of truth for colors, spacing, type, radii, and shadows.
+ * Components must reference these `--rf-*` custom properties only — never
+ * hardcode palette values.
+ *
+ * Consuming apps override tokens on `:root` or `html` (or set
+ * `data-theme="dark"` / `data-theme="light"` on `<html>`).
+ */
+
+:root,
+[data-theme='light'] {
+  /* Colors */
+  --rf-color-bg: #f7f4ef;
+  --rf-color-surface: #ffffff;
+  --rf-color-text: #1c1917;
+  --rf-color-text-muted: #78716c;
+  --rf-color-primary: #0f766e;
+  --rf-color-primary-contrast: #ffffff;
+  --rf-color-danger: #b91c1c;
+  --rf-color-border: #e7e5e4;
+
+  /* Spacing scale (4px base) */
+  --rf-space-1: 0.25rem;
+  --rf-space-2: 0.5rem;
+  --rf-space-3: 0.75rem;
+  --rf-space-4: 1rem;
+  --rf-space-5: 1.5rem;
+  --rf-space-6: 2rem;
+  --rf-space-8: 3rem;
+
+  /* Radii */
+  --rf-radius-sm: 0.25rem;
+  --rf-radius-md: 0.5rem;
+  --rf-radius-lg: 0.75rem;
+
+  /* Typography */
+  --rf-font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+  --rf-font-display: 'Fraunces', Georgia, serif;
+  --rf-font-size-sm: 0.875rem;
+  --rf-font-size-md: 1rem;
+  --rf-font-size-lg: 1.25rem;
+  --rf-font-size-xl: 1.5rem;
+  --rf-line-height: 1.5;
+
+  /* Elevation (keep subtle) */
+  --rf-shadow-sm: 0 1px 2px rgb(28 25 23 / 6%);
+  --rf-shadow-md: 0 4px 12px rgb(28 25 23 / 8%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --rf-color-bg: #1c1917;
+    --rf-color-surface: #292524;
+    --rf-color-text: #fafaf9;
+    --rf-color-text-muted: #a8a29e;
+    --rf-color-primary: #2dd4bf;
+    --rf-color-primary-contrast: #134e4a;
+    --rf-color-danger: #f87171;
+    --rf-color-border: #44403c;
+    --rf-shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
+    --rf-shadow-md: 0 4px 12px rgb(0 0 0 / 40%);
+  }
+}
+
+[data-theme='dark'] {
+  --rf-color-bg: #1c1917;
+  --rf-color-surface: #292524;
+  --rf-color-text: #fafaf9;
+  --rf-color-text-muted: #a8a29e;
+  --rf-color-primary: #2dd4bf;
+  --rf-color-primary-contrast: #134e4a;
+  --rf-color-danger: #f87171;
+  --rf-color-border: #44403c;
+  --rf-shadow-sm: 0 1px 2px rgb(0 0 0 / 35%);
+  --rf-shadow-md: 0 4px 12px rgb(0 0 0 / 40%);
+}

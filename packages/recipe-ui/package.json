@@ -1,6 +1,6 @@
 {
   "name": "@recipe-finder/ui",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Stencil UI library for Recipe Finder & Meal Planner",
   "private": true,
   "main": "dist/index.cjs.js",
@@ -11,14 +11,17 @@
   "unpkg": "dist/recipe-ui/recipe-ui.esm.js",
   "exports": {
     ".": {
-      "import": "./dist/recipe-ui/recipe-ui.esm.js",
-      "require": "./dist/recipe-ui/recipe-ui.cjs.js"
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js"
     },
     "./loader": {
+      "types": "./loader/index.d.ts",
       "import": "./loader/index.js",
-      "require": "./loader/index.cjs",
-      "types": "./loader/index.d.ts"
-    }
+      "require": "./loader/index.cjs.js"
+    },
+    "./global.css": "./dist/recipe-ui/recipe-ui.css",
+    "./components/*": "./dist/components/*",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist/",

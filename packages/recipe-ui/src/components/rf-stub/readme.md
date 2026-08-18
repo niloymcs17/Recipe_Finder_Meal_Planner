@@ -7,7 +7,8 @@
 
 ## Overview
 
-Placeholder stub so the library builds. Real components land in Phases 03–05.
+Throwaway smoke component so the library builds with zero feature components.
+Remove when Phase 04 adds real components.
 
 ## Shadow Parts
 
