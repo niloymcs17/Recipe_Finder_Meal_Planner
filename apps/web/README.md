@@ -1,42 +1,16 @@
-# sv
+# @recipe-finder/web
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit app for Recipe Finder & Meal Planner.
 
-## Creating a project
+## Auth & database (Phase 02)
 
-If you're seeing this, you've probably already done this step. Congrats!
+- **Browser localStorage only** — no Supabase / cloud DB
+- Local email/password auth + repositories under `src/lib/local-db/`
+- Env: MealDB base URL only (see `.env.example`)
 
-```sh
-# create a new project
-npx sv create my-app
+```bash
+# from monorepo root
+pnpm --filter @recipe-finder/web dev
 ```
 
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv@0.17.0 create --template minimal --types ts --no-install apps/web
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Routes: `/login`, `/signup`, `/auth/logout`.
