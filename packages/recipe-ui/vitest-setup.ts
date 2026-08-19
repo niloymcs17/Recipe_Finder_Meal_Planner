@@ -1,3 +1,6 @@
-import { defineCustomElements } from "./loader";
+import { beforeAll } from 'vitest';
 
-defineCustomElements();
+beforeAll(async () => {
+  const { defineCustomElements } = await import('./loader');
+  await defineCustomElements();
+});

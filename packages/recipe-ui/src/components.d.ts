@@ -5,38 +5,507 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { FilterChipOption } from "./components/filter-chip-group/filter-chip-group";
+export { FilterChipOption } from "./components/filter-chip-group/filter-chip-group";
 export namespace Components {
     /**
-     * Throwaway smoke component so the library builds with zero feature components.
-     * Remove when Phase 04 adds real components.
+     * Placeholder for empty favorites, search results, or planner days.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `message` | Primary copy |
+     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
+     * Slot: optional action content (e.g. a button).
      */
-    interface RfStub {
+    interface EmptyState {
+        /**
+          * Named icon key or absolute/relative image URL.
+          * @default 'inbox'
+         */
+        "icon": string;
+        /**
+          * @default 'Nothing here yet.'
+         */
+        "message": string;
     }
+    /**
+     * Multi-select chip group.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `filterChange` | `{ values: string[] }` | Selection toggled |
+     * Props: `options` (`{ label, value }[]`), `selected` (string[] of values).
+     */
+    interface FilterChipGroup {
+        /**
+          * Accessible group label.
+          * @default 'Filters'
+         */
+        "label": string;
+        /**
+          * Available chips.
+          * @default []
+         */
+        "options": FilterChipOption[];
+        /**
+          * Currently selected option values.
+          * @default []
+         */
+        "selected": string[];
+    }
+    /**
+     * Integer star rating control (1–5). No fractional/half-star API.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `ratingChange` | `{ value: number }` | Star chosen while not `readonly` |
+     */
+    interface RatingStars {
+        /**
+          * Max stars (fixed at 5 unless overridden).
+          * @default 5
+         */
+        "max": number;
+        /**
+          * When true, display only — no `ratingChange` events.
+          * @default false
+         */
+        "readonly": boolean;
+        /**
+          * Current rating 0–5 (integers).
+          * @default 0
+         */
+        "value": number;
+    }
+    /**
+     * Presentational recipe summary card for discovery/list views.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `recipeSelect` | `{ recipeId?: string }` | Card body activated (open details) |
+     * | `favoriteToggle` | `{ recipeId?: string; favorited: boolean }` | Favorite control toggled |
+     * `recipeId` is included in payloads only when the parent sets the prop.
+     * Slot: default footer/badge area below meta.
+     */
+    interface RecipeCard {
+        /**
+          * Cook time in minutes. Omitted from the UI when unset or ≤ 0.
+         */
+        "cookTime"?: number;
+        /**
+          * Visual favorite state controlled by the parent.
+          * @default false
+         */
+        "favorited": boolean;
+        /**
+          * Recipe display name (plan name: `title`). Named `heading` to avoid clashing with the native HTMLElement `title` attribute.
+          * @default ''
+         */
+        "heading": string;
+        /**
+          * Image URL; alt text is derived from `heading`.
+          * @default ''
+         */
+        "image": string;
+        /**
+          * Display rating (0–5). Hidden when unset.
+         */
+        "rating"?: number;
+        /**
+          * Optional opaque id from the host (MealDB or user) — never invented here.
+         */
+        "recipeId"?: string;
+        /**
+          * Category / cuisine labels shown as chips.
+          * @default []
+         */
+        "tags": string[];
+    }
+    /**
+     * Responsive CSS grid layout for child `recipe-card` (or other) elements.
+     * Presentational only — no data fetching.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `columns` | Target column count at wide viewports (1–6). Defaults to 3. |
+     * Slot: default — place cards as light-DOM children.
+     */
+    interface RecipeGrid {
+        /**
+          * Preferred column count on large screens. Smaller breakpoints collapse automatically via CSS.
+          * @default 3
+         */
+        "columns": number;
+    }
+    /**
+     * Controlled search field with internal debounce on change.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `searchChange` | `{ value: string }` | Debounced (~350ms) after typing |
+     * | `searchSubmit` | `{ value: string }` | Form submit / Enter |
+     * Parent owns `value`; update it from `searchChange` / `searchSubmit`.
+     * A local draft keeps the input responsive between parent updates.
+     */
+    interface SearchBar {
+        /**
+          * Accessible name for the input (visually hidden label text).
+          * @default 'Search'
+         */
+        "label": string;
+        /**
+          * @default 'Search recipes…'
+         */
+        "placeholder": string;
+        /**
+          * Controlled value from the parent.
+          * @default ''
+         */
+        "value": string;
+    }
+}
+export interface FilterChipGroupCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLFilterChipGroupElement;
+}
+export interface RatingStarsCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLRatingStarsElement;
+}
+export interface RecipeCardCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLRecipeCardElement;
+}
+export interface SearchBarCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLSearchBarElement;
 }
 declare global {
     /**
-     * Throwaway smoke component so the library builds with zero feature components.
-     * Remove when Phase 04 adds real components.
+     * Placeholder for empty favorites, search results, or planner days.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `message` | Primary copy |
+     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
+     * Slot: optional action content (e.g. a button).
      */
-    interface HTMLRfStubElement extends Components.RfStub, HTMLStencilElement {
+    interface HTMLEmptyStateElement extends Components.EmptyState, HTMLStencilElement {
     }
-    var HTMLRfStubElement: {
-        prototype: HTMLRfStubElement;
-        new (): HTMLRfStubElement;
+    var HTMLEmptyStateElement: {
+        prototype: HTMLEmptyStateElement;
+        new (): HTMLEmptyStateElement;
+    };
+    interface HTMLFilterChipGroupElementEventMap {
+        "filterChange": { values: string[] };
+    }
+    /**
+     * Multi-select chip group.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `filterChange` | `{ values: string[] }` | Selection toggled |
+     * Props: `options` (`{ label, value }[]`), `selected` (string[] of values).
+     */
+    interface HTMLFilterChipGroupElement extends Components.FilterChipGroup, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLFilterChipGroupElementEventMap>(type: K, listener: (this: HTMLFilterChipGroupElement, ev: FilterChipGroupCustomEvent<HTMLFilterChipGroupElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLFilterChipGroupElementEventMap>(type: K, listener: (this: HTMLFilterChipGroupElement, ev: FilterChipGroupCustomEvent<HTMLFilterChipGroupElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLFilterChipGroupElement: {
+        prototype: HTMLFilterChipGroupElement;
+        new (): HTMLFilterChipGroupElement;
+    };
+    interface HTMLRatingStarsElementEventMap {
+        "ratingChange": { value: number };
+    }
+    /**
+     * Integer star rating control (1–5). No fractional/half-star API.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `ratingChange` | `{ value: number }` | Star chosen while not `readonly` |
+     */
+    interface HTMLRatingStarsElement extends Components.RatingStars, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLRatingStarsElementEventMap>(type: K, listener: (this: HTMLRatingStarsElement, ev: RatingStarsCustomEvent<HTMLRatingStarsElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLRatingStarsElementEventMap>(type: K, listener: (this: HTMLRatingStarsElement, ev: RatingStarsCustomEvent<HTMLRatingStarsElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLRatingStarsElement: {
+        prototype: HTMLRatingStarsElement;
+        new (): HTMLRatingStarsElement;
+    };
+    interface HTMLRecipeCardElementEventMap {
+        "recipeSelect": { recipeId?: string };
+        "favoriteToggle": { recipeId?: string; favorited: boolean };
+    }
+    /**
+     * Presentational recipe summary card for discovery/list views.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `recipeSelect` | `{ recipeId?: string }` | Card body activated (open details) |
+     * | `favoriteToggle` | `{ recipeId?: string; favorited: boolean }` | Favorite control toggled |
+     * `recipeId` is included in payloads only when the parent sets the prop.
+     * Slot: default footer/badge area below meta.
+     */
+    interface HTMLRecipeCardElement extends Components.RecipeCard, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLRecipeCardElementEventMap>(type: K, listener: (this: HTMLRecipeCardElement, ev: RecipeCardCustomEvent<HTMLRecipeCardElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLRecipeCardElementEventMap>(type: K, listener: (this: HTMLRecipeCardElement, ev: RecipeCardCustomEvent<HTMLRecipeCardElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLRecipeCardElement: {
+        prototype: HTMLRecipeCardElement;
+        new (): HTMLRecipeCardElement;
+    };
+    /**
+     * Responsive CSS grid layout for child `recipe-card` (or other) elements.
+     * Presentational only — no data fetching.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `columns` | Target column count at wide viewports (1–6). Defaults to 3. |
+     * Slot: default — place cards as light-DOM children.
+     */
+    interface HTMLRecipeGridElement extends Components.RecipeGrid, HTMLStencilElement {
+    }
+    var HTMLRecipeGridElement: {
+        prototype: HTMLRecipeGridElement;
+        new (): HTMLRecipeGridElement;
+    };
+    interface HTMLSearchBarElementEventMap {
+        "searchChange": { value: string };
+        "searchSubmit": { value: string };
+    }
+    /**
+     * Controlled search field with internal debounce on change.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `searchChange` | `{ value: string }` | Debounced (~350ms) after typing |
+     * | `searchSubmit` | `{ value: string }` | Form submit / Enter |
+     * Parent owns `value`; update it from `searchChange` / `searchSubmit`.
+     * A local draft keeps the input responsive between parent updates.
+     */
+    interface HTMLSearchBarElement extends Components.SearchBar, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLSearchBarElementEventMap>(type: K, listener: (this: HTMLSearchBarElement, ev: SearchBarCustomEvent<HTMLSearchBarElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLSearchBarElementEventMap>(type: K, listener: (this: HTMLSearchBarElement, ev: SearchBarCustomEvent<HTMLSearchBarElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLSearchBarElement: {
+        prototype: HTMLSearchBarElement;
+        new (): HTMLSearchBarElement;
     };
     interface HTMLElementTagNameMap {
-        "rf-stub": HTMLRfStubElement;
+        "empty-state": HTMLEmptyStateElement;
+        "filter-chip-group": HTMLFilterChipGroupElement;
+        "rating-stars": HTMLRatingStarsElement;
+        "recipe-card": HTMLRecipeCardElement;
+        "recipe-grid": HTMLRecipeGridElement;
+        "search-bar": HTMLSearchBarElement;
     }
 }
 declare namespace LocalJSX {
     /**
-     * Throwaway smoke component so the library builds with zero feature components.
-     * Remove when Phase 04 adds real components.
+     * Placeholder for empty favorites, search results, or planner days.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `message` | Primary copy |
+     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
+     * Slot: optional action content (e.g. a button).
      */
-    interface RfStub {
+    interface EmptyState {
+        /**
+          * Named icon key or absolute/relative image URL.
+          * @default 'inbox'
+         */
+        "icon"?: string;
+        /**
+          * @default 'Nothing here yet.'
+         */
+        "message"?: string;
     }
+    /**
+     * Multi-select chip group.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `filterChange` | `{ values: string[] }` | Selection toggled |
+     * Props: `options` (`{ label, value }[]`), `selected` (string[] of values).
+     */
+    interface FilterChipGroup {
+        /**
+          * Accessible group label.
+          * @default 'Filters'
+         */
+        "label"?: string;
+        "onFilterChange"?: (event: FilterChipGroupCustomEvent<{ values: string[] }>) => void;
+        /**
+          * Available chips.
+          * @default []
+         */
+        "options"?: FilterChipOption[];
+        /**
+          * Currently selected option values.
+          * @default []
+         */
+        "selected"?: string[];
+    }
+    /**
+     * Integer star rating control (1–5). No fractional/half-star API.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `ratingChange` | `{ value: number }` | Star chosen while not `readonly` |
+     */
+    interface RatingStars {
+        /**
+          * Max stars (fixed at 5 unless overridden).
+          * @default 5
+         */
+        "max"?: number;
+        "onRatingChange"?: (event: RatingStarsCustomEvent<{ value: number }>) => void;
+        /**
+          * When true, display only — no `ratingChange` events.
+          * @default false
+         */
+        "readonly"?: boolean;
+        /**
+          * Current rating 0–5 (integers).
+          * @default 0
+         */
+        "value"?: number;
+    }
+    /**
+     * Presentational recipe summary card for discovery/list views.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `recipeSelect` | `{ recipeId?: string }` | Card body activated (open details) |
+     * | `favoriteToggle` | `{ recipeId?: string; favorited: boolean }` | Favorite control toggled |
+     * `recipeId` is included in payloads only when the parent sets the prop.
+     * Slot: default footer/badge area below meta.
+     */
+    interface RecipeCard {
+        /**
+          * Cook time in minutes. Omitted from the UI when unset or ≤ 0.
+         */
+        "cookTime"?: number;
+        /**
+          * Visual favorite state controlled by the parent.
+          * @default false
+         */
+        "favorited"?: boolean;
+        /**
+          * Recipe display name (plan name: `title`). Named `heading` to avoid clashing with the native HTMLElement `title` attribute.
+          * @default ''
+         */
+        "heading"?: string;
+        /**
+          * Image URL; alt text is derived from `heading`.
+          * @default ''
+         */
+        "image"?: string;
+        "onFavoriteToggle"?: (event: RecipeCardCustomEvent<{ recipeId?: string; favorited: boolean }>) => void;
+        "onRecipeSelect"?: (event: RecipeCardCustomEvent<{ recipeId?: string }>) => void;
+        /**
+          * Display rating (0–5). Hidden when unset.
+         */
+        "rating"?: number;
+        /**
+          * Optional opaque id from the host (MealDB or user) — never invented here.
+         */
+        "recipeId"?: string;
+        /**
+          * Category / cuisine labels shown as chips.
+          * @default []
+         */
+        "tags"?: string[];
+    }
+    /**
+     * Responsive CSS grid layout for child `recipe-card` (or other) elements.
+     * Presentational only — no data fetching.
+     * | Prop | Description |
+     * | --- | --- |
+     * | `columns` | Target column count at wide viewports (1–6). Defaults to 3. |
+     * Slot: default — place cards as light-DOM children.
+     */
+    interface RecipeGrid {
+        /**
+          * Preferred column count on large screens. Smaller breakpoints collapse automatically via CSS.
+          * @default 3
+         */
+        "columns"?: number;
+    }
+    /**
+     * Controlled search field with internal debounce on change.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `searchChange` | `{ value: string }` | Debounced (~350ms) after typing |
+     * | `searchSubmit` | `{ value: string }` | Form submit / Enter |
+     * Parent owns `value`; update it from `searchChange` / `searchSubmit`.
+     * A local draft keeps the input responsive between parent updates.
+     */
+    interface SearchBar {
+        /**
+          * Accessible name for the input (visually hidden label text).
+          * @default 'Search'
+         */
+        "label"?: string;
+        "onSearchChange"?: (event: SearchBarCustomEvent<{ value: string }>) => void;
+        "onSearchSubmit"?: (event: SearchBarCustomEvent<{ value: string }>) => void;
+        /**
+          * @default 'Search recipes…'
+         */
+        "placeholder"?: string;
+        /**
+          * Controlled value from the parent.
+          * @default ''
+         */
+        "value"?: string;
+    }
+
+    interface EmptyStateAttributes {
+        "message": string;
+        "icon": string;
+    }
+    interface FilterChipGroupAttributes {
+        "label": string;
+    }
+    interface RatingStarsAttributes {
+        "value": number;
+        "readonly": boolean;
+        "max": number;
+    }
+    interface RecipeCardAttributes {
+        "recipeId": string;
+        "heading": string;
+        "image": string;
+        "cookTime": number;
+        "rating": number;
+        "favorited": boolean;
+    }
+    interface RecipeGridAttributes {
+        "columns": number;
+    }
+    interface SearchBarAttributes {
+        "placeholder": string;
+        "value": string;
+        "label": string;
+    }
+
     interface IntrinsicElements {
-        "rf-stub": RfStub;
+        "empty-state": Omit<EmptyState, keyof EmptyStateAttributes> & { [K in keyof EmptyState & keyof EmptyStateAttributes]?: EmptyState[K] } & { [K in keyof EmptyState & keyof EmptyStateAttributes as `attr:${K}`]?: EmptyStateAttributes[K] } & { [K in keyof EmptyState & keyof EmptyStateAttributes as `prop:${K}`]?: EmptyState[K] };
+        "filter-chip-group": Omit<FilterChipGroup, keyof FilterChipGroupAttributes> & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes]?: FilterChipGroup[K] } & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes as `attr:${K}`]?: FilterChipGroupAttributes[K] } & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes as `prop:${K}`]?: FilterChipGroup[K] };
+        "rating-stars": Omit<RatingStars, keyof RatingStarsAttributes> & { [K in keyof RatingStars & keyof RatingStarsAttributes]?: RatingStars[K] } & { [K in keyof RatingStars & keyof RatingStarsAttributes as `attr:${K}`]?: RatingStarsAttributes[K] } & { [K in keyof RatingStars & keyof RatingStarsAttributes as `prop:${K}`]?: RatingStars[K] };
+        "recipe-card": Omit<RecipeCard, keyof RecipeCardAttributes> & { [K in keyof RecipeCard & keyof RecipeCardAttributes]?: RecipeCard[K] } & { [K in keyof RecipeCard & keyof RecipeCardAttributes as `attr:${K}`]?: RecipeCardAttributes[K] } & { [K in keyof RecipeCard & keyof RecipeCardAttributes as `prop:${K}`]?: RecipeCard[K] };
+        "recipe-grid": Omit<RecipeGrid, keyof RecipeGridAttributes> & { [K in keyof RecipeGrid & keyof RecipeGridAttributes]?: RecipeGrid[K] } & { [K in keyof RecipeGrid & keyof RecipeGridAttributes as `attr:${K}`]?: RecipeGridAttributes[K] } & { [K in keyof RecipeGrid & keyof RecipeGridAttributes as `prop:${K}`]?: RecipeGrid[K] };
+        "search-bar": Omit<SearchBar, keyof SearchBarAttributes> & { [K in keyof SearchBar & keyof SearchBarAttributes]?: SearchBar[K] } & { [K in keyof SearchBar & keyof SearchBarAttributes as `attr:${K}`]?: SearchBarAttributes[K] } & { [K in keyof SearchBar & keyof SearchBarAttributes as `prop:${K}`]?: SearchBar[K] };
     }
 }
 export { LocalJSX as JSX };
@@ -44,10 +513,58 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             /**
-             * Throwaway smoke component so the library builds with zero feature components.
-             * Remove when Phase 04 adds real components.
+             * Placeholder for empty favorites, search results, or planner days.
+             * | Prop | Description |
+             * | --- | --- |
+             * | `message` | Primary copy |
+             * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
+             * Slot: optional action content (e.g. a button).
              */
-            "rf-stub": LocalJSX.IntrinsicElements["rf-stub"] & JSXBase.HTMLAttributes<HTMLRfStubElement>;
+            "empty-state": LocalJSX.IntrinsicElements["empty-state"] & JSXBase.HTMLAttributes<HTMLEmptyStateElement>;
+            /**
+             * Multi-select chip group.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `filterChange` | `{ values: string[] }` | Selection toggled |
+             * Props: `options` (`{ label, value }[]`), `selected` (string[] of values).
+             */
+            "filter-chip-group": LocalJSX.IntrinsicElements["filter-chip-group"] & JSXBase.HTMLAttributes<HTMLFilterChipGroupElement>;
+            /**
+             * Integer star rating control (1–5). No fractional/half-star API.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `ratingChange` | `{ value: number }` | Star chosen while not `readonly` |
+             */
+            "rating-stars": LocalJSX.IntrinsicElements["rating-stars"] & JSXBase.HTMLAttributes<HTMLRatingStarsElement>;
+            /**
+             * Presentational recipe summary card for discovery/list views.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `recipeSelect` | `{ recipeId?: string }` | Card body activated (open details) |
+             * | `favoriteToggle` | `{ recipeId?: string; favorited: boolean }` | Favorite control toggled |
+             * `recipeId` is included in payloads only when the parent sets the prop.
+             * Slot: default footer/badge area below meta.
+             */
+            "recipe-card": LocalJSX.IntrinsicElements["recipe-card"] & JSXBase.HTMLAttributes<HTMLRecipeCardElement>;
+            /**
+             * Responsive CSS grid layout for child `recipe-card` (or other) elements.
+             * Presentational only — no data fetching.
+             * | Prop | Description |
+             * | --- | --- |
+             * | `columns` | Target column count at wide viewports (1–6). Defaults to 3. |
+             * Slot: default — place cards as light-DOM children.
+             */
+            "recipe-grid": LocalJSX.IntrinsicElements["recipe-grid"] & JSXBase.HTMLAttributes<HTMLRecipeGridElement>;
+            /**
+             * Controlled search field with internal debounce on change.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `searchChange` | `{ value: string }` | Debounced (~350ms) after typing |
+             * | `searchSubmit` | `{ value: string }` | Form submit / Enter |
+             * Parent owns `value`; update it from `searchChange` / `searchSubmit`.
+             * A local draft keeps the input responsive between parent updates.
+             */
+            "search-bar": LocalJSX.IntrinsicElements["search-bar"] & JSXBase.HTMLAttributes<HTMLSearchBarElement>;
         }
     }
 }

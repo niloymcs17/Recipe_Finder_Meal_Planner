@@ -1,0 +1,43 @@
+:host {
+  display: inline-block;
+  font-family: var(--rf-font-sans);
+  color: var(--rf-color-text);
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--rf-space-1);
+}
+
+.star {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rf-radius-sm);
+  background: transparent;
+  color: var(--rf-color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rating--readonly .star {
+  cursor: default;
+  width: auto;
+  height: auto;
+}
+
+.star--filled {
+  color: var(--rf-color-primary);
+}
+
+.star:not(span):hover,
+.star:not(span):focus-visible {
+  color: var(--rf-color-primary);
+  outline: 2px solid color-mix(in srgb, var(--rf-color-primary) 35%, transparent);
+  outline-offset: 1px;
+}

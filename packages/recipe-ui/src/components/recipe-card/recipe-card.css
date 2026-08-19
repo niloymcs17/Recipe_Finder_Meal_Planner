@@ -1,0 +1,126 @@
+:host {
+  display: block;
+  font-family: var(--rf-font-sans);
+  color: var(--rf-color-text);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--rf-color-surface);
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-lg);
+  box-shadow: var(--rf-shadow-sm);
+  overflow: hidden;
+}
+
+.media {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--rf-color-border);
+  aspect-ratio: 4 / 3;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.media img,
+.media__placeholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media__placeholder {
+  background: linear-gradient(
+    135deg,
+    var(--rf-color-border),
+    color-mix(in srgb, var(--rf-color-primary) 18%, var(--rf-color-border))
+  );
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-2);
+  padding: var(--rf-space-3) var(--rf-space-4) var(--rf-space-4);
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--rf-space-2);
+}
+
+.heading {
+  margin: 0;
+  flex: 1;
+  font-family: var(--rf-font-display);
+  font-size: var(--rf-font-size-lg);
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.favorite {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-md);
+  background: var(--rf-color-surface);
+  color: var(--rf-color-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.favorite:hover,
+.favorite:focus-visible {
+  color: var(--rf-color-primary);
+  border-color: var(--rf-color-primary);
+  outline: 2px solid color-mix(in srgb, var(--rf-color-primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.favorite--on {
+  color: var(--rf-color-primary);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rf-space-2);
+  color: var(--rf-color-text-muted);
+  font-size: var(--rf-font-size-sm);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rf-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  padding: var(--rf-space-1) var(--rf-space-2);
+  border-radius: var(--rf-radius-sm);
+  background: color-mix(in srgb, var(--rf-color-primary) 12%, var(--rf-color-surface));
+  color: var(--rf-color-primary);
+  font-size: var(--rf-font-size-sm);
+}
+
+.footer:empty {
+  display: none;
+}
+
+.footer:not(:empty) {
+  margin-top: auto;
+  padding-top: var(--rf-space-2);
+}

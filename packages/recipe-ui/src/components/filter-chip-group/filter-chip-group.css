@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  font-family: var(--rf-font-sans);
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rf-space-2);
+}
+
+.chip {
+  padding: var(--rf-space-2) var(--rf-space-3);
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-md);
+  background: var(--rf-color-surface);
+  color: var(--rf-color-text);
+  font: inherit;
+  font-size: var(--rf-font-size-sm);
+  cursor: pointer;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  border-color: var(--rf-color-primary);
+  color: var(--rf-color-primary);
+  outline: 2px solid color-mix(in srgb, var(--rf-color-primary) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.chip--on {
+  background: var(--rf-color-primary);
+  border-color: var(--rf-color-primary);
+  color: var(--rf-color-primary-contrast);
+}
+
+.chip--on:hover,
+.chip--on:focus-visible {
+  color: var(--rf-color-primary-contrast);
+}

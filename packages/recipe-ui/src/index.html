@@ -12,14 +12,177 @@
         margin: 0;
         min-height: 100vh;
         font-family: var(--rf-font-sans);
-        background: var(--rf-color-bg);
+        background:
+          radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in srgb, var(--rf-color-primary) 14%, transparent), transparent),
+          var(--rf-color-bg);
         color: var(--rf-color-text);
         padding: var(--rf-space-6);
+        line-height: var(--rf-line-height);
+      }
+
+      h1 {
+        margin: 0 0 var(--rf-space-2);
+        font-family: var(--rf-font-display);
+        font-size: var(--rf-font-size-xl);
+        font-weight: 600;
+      }
+
+      h2 {
+        margin: var(--rf-space-8) 0 var(--rf-space-3);
+        font-family: var(--rf-font-display);
+        font-size: var(--rf-font-size-lg);
+      }
+
+      .lede {
+        margin: 0 0 var(--rf-space-6);
+        color: var(--rf-color-text-muted);
+        max-width: 40rem;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--rf-space-4);
+        max-width: 48rem;
+      }
+
+      .log {
+        margin-top: var(--rf-space-4);
+        padding: var(--rf-space-3);
+        border: 1px solid var(--rf-color-border);
+        border-radius: var(--rf-radius-md);
+        background: var(--rf-color-surface);
+        font-size: var(--rf-font-size-sm);
+        color: var(--rf-color-text-muted);
+        min-height: 2.5rem;
+      }
+
+      .preview-btn {
+        padding: var(--rf-space-2) var(--rf-space-4);
+        border: 0;
+        border-radius: var(--rf-radius-md);
+        background: var(--rf-color-primary);
+        color: var(--rf-color-primary-contrast);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <p>Theme tokens loaded. Feature components arrive in Phases 04–05.</p>
-    <rf-stub></rf-stub>
+    <h1>@recipe-finder/ui</h1>
+    <p class="lede">Phase 04 showcase — search, filters, cards, ratings, empty state. Events log below each section.</p>
+
+    <section class="stack">
+      <h2>Search &amp; filters</h2>
+      <search-bar id="demo-search" placeholder="Try typing (debounced ~350ms)…" value=""></search-bar>
+      <filter-chip-group
+        id="demo-filters"
+        label="Categories"
+      ></filter-chip-group>
+      <div class="log" id="search-log">Interact with search or chips…</div>
+    </section>
+
+    <section>
+      <h2>Recipe grid</h2>
+      <recipe-grid id="demo-grid" columns="3"></recipe-grid>
+      <div class="log" id="card-log">Click a card or favorite…</div>
+    </section>
+
+    <section class="stack">
+      <h2>Rating stars</h2>
+      <rating-stars id="demo-rating" value="3"></rating-stars>
+      <rating-stars value="4" readonly></rating-stars>
+      <div class="log" id="rating-log">Change the interactive stars…</div>
+    </section>
+
+    <section>
+      <h2>Empty state</h2>
+      <empty-state message="No recipes match your filters." icon="search">
+        <button class="preview-btn" type="button">Clear filters</button>
+      </empty-state>
+    </section>
+
+    <script>
+      const searchLog = document.getElementById('search-log');
+      const cardLog = document.getElementById('card-log');
+      const ratingLog = document.getElementById('rating-log');
+
+      const search = document.getElementById('demo-search');
+      search.addEventListener('searchChange', (e) => {
+        search.value = e.detail.value;
+        searchLog.textContent = 'searchChange: ' + JSON.stringify(e.detail);
+      });
+      search.addEventListener('searchSubmit', (e) => {
+        searchLog.textContent = 'searchSubmit: ' + JSON.stringify(e.detail);
+      });
+
+      const filters = document.getElementById('demo-filters');
+      filters.options = [
+        { label: 'Seafood', value: 'seafood' },
+        { label: 'Vegetarian', value: 'vegetarian' },
+        { label: 'Dessert', value: 'dessert' },
+        { label: 'Breakfast', value: 'breakfast' },
+      ];
+      filters.selected = [];
+      filters.addEventListener('filterChange', (e) => {
+        filters.selected = e.detail.values;
+        searchLog.textContent = 'filterChange: ' + JSON.stringify(e.detail);
+      });
+
+      const grid = document.getElementById('demo-grid');
+      const samples = [
+        {
+          recipeId: 'mealdb:1',
+          heading: 'Spicy Arrabiata',
+          cookTime: 35,
+          rating: 4.5,
+          tags: ['Pasta', 'Italian'],
+          image: 'https://www.themealdb.com/images/media/meals/ustsqw1468250014.jpg',
+          favorited: false,
+        },
+        {
+          recipeId: 'mealdb:2',
+          heading: 'Chickpea Curry',
+          cookTime: 40,
+          rating: 4,
+          tags: ['Vegan', 'Indian'],
+          image: 'https://www.themealdb.com/images/media/meals/sywsqw1468233479.jpg',
+          favorited: true,
+        },
+        {
+          recipeId: 'user:3',
+          heading: 'Weeknight Salad',
+          cookTime: 15,
+          rating: 3,
+          tags: ['Salad'],
+          favorited: false,
+        },
+      ];
+
+      samples.forEach((sample) => {
+        const card = document.createElement('recipe-card');
+        Object.assign(card, sample);
+        const badge = document.createElement('span');
+        badge.textContent = sample.recipeId.startsWith('user:') ? 'Yours' : 'MealDB';
+        badge.style.fontSize = '0.75rem';
+        badge.style.color = 'var(--rf-color-text-muted)';
+        card.append(badge);
+        card.addEventListener('recipeSelect', (e) => {
+          cardLog.textContent = 'recipeSelect: ' + JSON.stringify(e.detail);
+        });
+        card.addEventListener('favoriteToggle', (e) => {
+          card.favorited = e.detail.favorited;
+          cardLog.textContent = 'favoriteToggle: ' + JSON.stringify(e.detail);
+        });
+        grid.append(card);
+      });
+
+      const rating = document.getElementById('demo-rating');
+      rating.addEventListener('ratingChange', (e) => {
+        rating.value = e.detail.value;
+        ratingLog.textContent = 'ratingChange: ' + JSON.stringify(e.detail);
+      });
+    </script>
   </body>
 </html>

@@ -66,3 +66,16 @@ Token categories: colors (`--rf-color-*`), spacing (`--rf-space-*`), radii, font
 ## Utils
 
 - `debounce` — shared helper for search-bar internal debounce (~300–400ms). Source: `src/utils/debounce.ts`.
+
+##  components
+
+| Tag | Key props | Events |
+| --- | --- | --- |
+| `recipe-card` | `heading` (display title), `image`, `cookTime`, `tags`, `rating`, `recipeId?`, `favorited` | `recipeSelect`, `favoriteToggle` |
+| `recipe-grid` | `columns` | — (default slot) |
+| `search-bar` | `placeholder`, `value`, `label` | `searchChange` (debounced), `searchSubmit` |
+| `filter-chip-group` | `options`, `selected`, `label` | `filterChange` |
+| `rating-stars` | `value`, `readonly` (integer 1–5) | `ratingChange` |
+| `empty-state` | `message`, `icon` | — (action slot) |
+
+Preview: `pnpm --filter @recipe-finder/ui start` then open the Stencil www page.

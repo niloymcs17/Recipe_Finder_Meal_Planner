@@ -1,0 +1,64 @@
+:host {
+  display: block;
+  font-family: var(--rf-font-sans);
+  color: var(--rf-color-text);
+}
+
+.search {
+  display: flex;
+  align-items: stretch;
+  gap: var(--rf-space-2);
+  width: 100%;
+}
+
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--rf-space-3) var(--rf-space-4);
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-md);
+  background: var(--rf-color-surface);
+  color: var(--rf-color-text);
+  font: inherit;
+  font-size: var(--rf-font-size-md);
+  line-height: var(--rf-line-height);
+}
+
+.input::placeholder {
+  color: var(--rf-color-text-muted);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--rf-color-primary);
+  outline-offset: 1px;
+  border-color: var(--rf-color-primary);
+}
+
+.submit {
+  flex-shrink: 0;
+  padding: var(--rf-space-3) var(--rf-space-4);
+  border: 0;
+  border-radius: var(--rf-radius-md);
+  background: var(--rf-color-primary);
+  color: var(--rf-color-primary-contrast);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:focus-visible {
+  outline: 2px solid var(--rf-color-primary);
+  outline-offset: 2px;
+}
