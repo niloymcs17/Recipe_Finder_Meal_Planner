@@ -71,7 +71,7 @@
   </head>
   <body>
     <h1>@recipe-finder/ui</h1>
-    <p class="lede">Phase 04 showcase — search, filters, cards, ratings, empty state. Events log below each section.</p>
+    <p class="lede">Phase 04–05 showcase — discovery controls plus form, modal, toast, and day-column. Events log below each section.</p>
 
     <section class="stack">
       <h2>Search &amp; filters</h2>
@@ -101,6 +101,58 @@
       <empty-state message="No recipes match your filters." icon="search">
         <button class="preview-btn" type="button">Clear filters</button>
       </empty-state>
+    </section>
+
+    <section class="stack">
+      <h2>Form input</h2>
+      <form-input id="demo-input" label="Recipe title" name="title" required value=""></form-input>
+      <form-input
+        id="demo-input-error"
+        label="Cook time (minutes)"
+        name="cookTime"
+        type="number"
+        value="-5"
+        error="Cook time must be a positive number"
+      ></form-input>
+      <div class="log" id="form-log">Type in the title field…</div>
+    </section>
+
+    <section class="stack">
+      <h2>Modal</h2>
+      <button class="preview-btn" type="button" id="open-modal">Open confirm modal</button>
+      <rf-modal id="demo-modal" heading="Delete recipe?" confirm-label="Delete" cancel-label="Cancel">
+        <p>This cannot be undone. The recipe will be removed from your library.</p>
+      </rf-modal>
+      <div class="log" id="modal-log">Open the modal and confirm or cancel…</div>
+    </section>
+
+    <section class="stack">
+      <h2>Toast notification</h2>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--rf-space-2)">
+        <button class="preview-btn" type="button" data-toast="success">Success toast</button>
+        <button class="preview-btn" type="button" data-toast="error">Error toast</button>
+        <button class="preview-btn" type="button" data-toast="info">Info toast</button>
+      </div>
+      <div id="toast-host" style="min-height:3rem"></div>
+      <p class="lede" style="margin:0">Auto-dismisses after 3500ms.</p>
+    </section>
+
+    <section>
+      <h2>Day column</h2>
+      <p class="lede">Drag a chip onto a day, or select a recipe then tap “Assign here”.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--rf-space-2);margin-bottom:var(--rf-space-4)">
+        <button class="preview-btn" type="button" id="pick-arrabiata" draggable="true" data-recipe-id="mealdb:1">
+          Drag / pick Arrabiata
+        </button>
+        <button class="preview-btn" type="button" id="pick-curry" draggable="true" data-recipe-id="mealdb:2">
+          Drag / pick Curry
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:var(--rf-space-3)">
+        <day-column id="day-mon" day="monday" label="Monday"></day-column>
+        <day-column id="day-tue" day="tuesday" label="Tuesday"></day-column>
+      </div>
+      <div class="log" id="day-log">Assign or remove meals…</div>
     </section>
 
     <script>
@@ -183,6 +235,113 @@
         rating.value = e.detail.value;
         ratingLog.textContent = 'ratingChange: ' + JSON.stringify(e.detail);
       });
+
+      const formLog = document.getElementById('form-log');
+      const demoInput = document.getElementById('demo-input');
+      demoInput.addEventListener('valueChange', (e) => {
+        demoInput.value = e.detail.value;
+        formLog.textContent = 'valueChange: ' + JSON.stringify(e.detail);
+      });
+
+      const modalLog = document.getElementById('modal-log');
+      const modal = document.getElementById('demo-modal');
+      document.getElementById('open-modal').addEventListener('click', () => {
+        modal.open = true;
+      });
+      modal.addEventListener('close', () => {
+        modal.open = false;
+        modalLog.textContent = 'close';
+      });
+      modal.addEventListener('confirm', () => {
+        modal.open = false;
+        modalLog.textContent = 'confirm';
+      });
+
+      const toastHost = document.getElementById('toast-host');
+      document.querySelectorAll('[data-toast]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          toastHost.innerHTML = '';
+          const toast = document.createElement('toast-notification');
+          toast.message = btn.getAttribute('data-toast') + ' — sample message';
+          toast.type = btn.getAttribute('data-toast');
+          toastHost.append(toast);
+        });
+      });
+
+      const dayLog = document.getElementById('day-log');
+      const dayMon = document.getElementById('day-mon');
+      const dayTue = document.getElementById('day-tue');
+      let pendingRecipeId = '';
+      let entrySeq = 1;
+
+      const mealStore = {
+        monday: [],
+        tuesday: [],
+      };
+
+      function syncDays() {
+        dayMon.meals = mealStore.monday.slice();
+        dayTue.meals = mealStore.tuesday.slice();
+        dayMon.pendingRecipeId = pendingRecipeId;
+        dayTue.pendingRecipeId = pendingRecipeId;
+      }
+
+      function titleFor(recipeId) {
+        return recipeId === 'mealdb:2' ? 'Chickpea Curry' : 'Spicy Arrabiata';
+      }
+
+      function onMealDrop(e) {
+        const { recipeId, day } = e.detail;
+        const list = mealStore[day];
+        if (!list) return;
+        list.push({ id: 'entry-' + entrySeq++, title: titleFor(recipeId), recipeId });
+        pendingRecipeId = '';
+        syncDays();
+        dayLog.textContent = 'mealDrop: ' + JSON.stringify(e.detail);
+      }
+
+      function onMealRemove(e) {
+        const { entryId, day } = e.detail;
+        mealStore[day] = (mealStore[day] || []).filter((m) => m.id !== entryId);
+        syncDays();
+        dayLog.textContent = 'mealRemove: ' + JSON.stringify(e.detail);
+      }
+
+      dayMon.addEventListener('mealDrop', onMealDrop);
+      dayTue.addEventListener('mealDrop', onMealDrop);
+      dayMon.addEventListener('mealRemove', onMealRemove);
+      dayTue.addEventListener('mealRemove', onMealRemove);
+
+      dayMon.innerHTML = '';
+      const emptyMon = document.createElement('empty-state');
+      emptyMon.message = 'No meals Monday';
+      emptyMon.icon = 'calendar';
+      dayMon.append(emptyMon);
+
+      dayTue.innerHTML = '';
+      const emptyTue = document.createElement('empty-state');
+      emptyTue.message = 'No meals Tuesday';
+      emptyTue.icon = 'calendar';
+      dayTue.append(emptyTue);
+
+      syncDays();
+
+      function bindPick(el) {
+        el.addEventListener('click', () => {
+          pendingRecipeId = el.getAttribute('data-recipe-id') || '';
+          syncDays();
+          dayLog.textContent = 'pendingRecipeId: ' + pendingRecipeId + ' — tap Assign here on a day';
+        });
+        el.addEventListener('dragstart', (e) => {
+          const id = el.getAttribute('data-recipe-id') || '';
+          e.dataTransfer.setData('application/x-recipe-id', id);
+          e.dataTransfer.setData('text/plain', id);
+          e.dataTransfer.effectAllowed = 'copy';
+        });
+      }
+
+      bindPick(document.getElementById('pick-arrabiata'));
+      bindPick(document.getElementById('pick-curry'));
     </script>
   </body>
 </html>

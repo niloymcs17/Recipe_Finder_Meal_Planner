@@ -1,0 +1,110 @@
+:host {
+  display: block;
+  font-family: var(--rf-font-sans);
+  color: var(--rf-color-text);
+  height: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-3);
+  min-height: 12rem;
+  height: 100%;
+  padding: var(--rf-space-3);
+  border: 1px dashed var(--rf-color-border);
+  border-radius: var(--rf-radius-lg);
+  background: var(--rf-color-surface);
+  box-shadow: var(--rf-shadow-sm);
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.column--over {
+  border-style: solid;
+  border-color: var(--rf-color-primary);
+  background: color-mix(in srgb, var(--rf-color-primary) 8%, var(--rf-color-surface));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rf-space-2);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--rf-font-display);
+  font-size: var(--rf-font-size-md);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.assign {
+  flex-shrink: 0;
+  padding: var(--rf-space-1) var(--rf-space-2);
+  border: 0;
+  border-radius: var(--rf-radius-sm);
+  background: var(--rf-color-primary);
+  color: var(--rf-color-primary-contrast);
+  font: inherit;
+  font-size: var(--rf-font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.assign:focus-visible {
+  outline: 2px solid var(--rf-color-primary);
+  outline-offset: 2px;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 6rem;
+}
+
+.meals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.meal {
+  display: flex;
+  align-items: center;
+  gap: var(--rf-space-2);
+  padding: var(--rf-space-2) var(--rf-space-3);
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-md);
+  background: color-mix(in srgb, var(--rf-color-bg) 65%, var(--rf-color-surface));
+}
+
+.meal__title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--rf-font-size-sm);
+  line-height: var(--rf-line-height);
+}
+
+.meal__remove {
+  flex-shrink: 0;
+  padding: var(--rf-space-1) var(--rf-space-2);
+  border: 1px solid var(--rf-color-border);
+  border-radius: var(--rf-radius-sm);
+  background: var(--rf-color-surface);
+  color: var(--rf-color-danger);
+  font: inherit;
+  font-size: var(--rf-font-size-sm);
+  cursor: pointer;
+}
+
+.meal__remove:focus-visible {
+  outline: 2px solid var(--rf-color-danger);
+  outline-offset: 1px;
+}

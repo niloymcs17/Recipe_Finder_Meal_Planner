@@ -67,7 +67,7 @@ Token categories: colors (`--rf-color-*`), spacing (`--rf-space-*`), radii, font
 
 - `debounce` — shared helper for search-bar internal debounce (~300–400ms). Source: `src/utils/debounce.ts`.
 
-##  components
+## Components
 
 | Tag | Key props | Events |
 | --- | --- | --- |
@@ -77,5 +77,12 @@ Token categories: colors (`--rf-color-*`), spacing (`--rf-space-*`), radii, font
 | `filter-chip-group` | `options`, `selected`, `label` | `filterChange` |
 | `rating-stars` | `value`, `readonly` (integer 1–5) | `ratingChange` |
 | `empty-state` | `message`, `icon` | — (action slot) |
+| `form-input` | `label`, `value`, `error`, `required`, `type`, `name`, `disabled` | `valueChange` |
+| `rf-modal` | `open`, `heading` (plan: title), `confirmLabel`, `cancelLabel` | `close`, `confirm` |
+| `toast-notification` | `message`, `type` (`success`\|`error`\|`info`), `visible`, auto-dismiss **3500ms** | — |
+| `day-column` | `day`, `label`, `meals` (`{ id, title, recipeId? }[]`), `pendingRecipeId` | `mealDrop`, `mealRemove` |
+
+`rf-modal` uses a hyphenated tag (custom elements require one); source folder remains `modal/`.
+`day-column` `mealDrop` payload `{ recipeId, day }` is identical for HTML5 drag-and-drop and the tap “Assign here” fallback.
 
 Preview: `pnpm --filter @recipe-finder/ui start` then open the Stencil www page.

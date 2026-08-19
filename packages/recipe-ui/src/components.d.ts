@@ -9,13 +9,37 @@ import { FilterChipOption } from "./components/filter-chip-group/filter-chip-gro
 export { FilterChipOption } from "./components/filter-chip-group/filter-chip-group";
 export namespace Components {
     /**
-     * Placeholder for empty favorites, search results, or planner days.
-     * | Prop | Description |
-     * | --- | --- |
-     * | `message` | Primary copy |
-     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
-     * Slot: optional action content (e.g. a button).
+     * Weekly planner day column — presentational only (no persistence).
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `mealDrop` | `{ recipeId: string; day: string }` | Recipe assigned via DnD **or** tap fallback |
+     * | `mealRemove` | `{ entryId: string; day: string; recipeId?: string }` | Remove control on a meal |
+     * Slot: default empty-state content when `meals` is empty.
+     * Tap fallback: when `pendingRecipeId` is set, “Assign here” emits the same `mealDrop` shape as a drop.
+     * DnD reads `application/x-recipe-id` (preferred) or `text/plain`.
      */
+    interface DayColumn {
+        /**
+          * Stable day key included in event payloads (e.g. `monday`).
+          * @default ''
+         */
+        "day": string;
+        /**
+          * Display label; falls back to `day` when empty.
+          * @default ''
+         */
+        "label": string;
+        /**
+          * Assigned meals for this day.
+          * @default []
+         */
+        "meals": DayMealItem[];
+        /**
+          * Recipe id waiting to be assigned (host selection). Enables the tap-to-assign control when set.
+          * @default ''
+         */
+        "pendingRecipeId": string;
+    }
     interface EmptyState {
         /**
           * Named icon key or absolute/relative image URL.
@@ -50,6 +74,56 @@ export namespace Components {
           * @default []
          */
         "selected": string[];
+    }
+    /**
+     * Labeled text control with optional validation message.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `valueChange` | `{ value: string }` | Input value changes |
+     * Parent owns `value` and `error`. Label is associated via `for`/`id`.
+     * When `error` is set, the control is `aria-invalid` and described by the error text.
+     */
+    interface FormInput {
+        /**
+          * Accessible autocomplete hint when relevant.
+          * @default ''
+         */
+        "autocomplete": string;
+        /**
+          * @default false
+         */
+        "disabled": boolean;
+        /**
+          * Validation message; empty/undefined hides the error region.
+          * @default ''
+         */
+        "error": string;
+        /**
+          * @default ''
+         */
+        "label": string;
+        /**
+          * @default ''
+         */
+        "name": string;
+        /**
+          * @default ''
+         */
+        "placeholder": string;
+        /**
+          * @default false
+         */
+        "required": boolean;
+        /**
+          * Native input type (text, email, password, number, …).
+          * @default 'text'
+         */
+        "type": string;
+        /**
+          * Controlled value from the parent.
+          * @default ''
+         */
+        "value": string;
     }
     /**
      * Integer star rating control (1–5). No fractional/half-star API.
@@ -133,6 +207,42 @@ export namespace Components {
         "columns": number;
     }
     /**
+     * Confirm/cancel dialog with a default body slot.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `close` | `void` | Cancel, backdrop, Escape, or explicit dismiss |
+     * | `confirm` | `void` | Confirm button activated |
+     * Plan prop `title` maps to `heading` (avoids clashing with HTMLElement.title).
+     * Tag is `rf-modal` (custom elements require a hyphen; folder stays `modal`).
+     * When `open` is false the dialog is not rendered, so nothing inside stays tabbable.
+     * Focus is trapped while open; previous focus is restored on close.
+     */
+    interface RfModal {
+        /**
+          * @default 'Cancel'
+         */
+        "cancelLabel": string;
+        /**
+          * @default 'Confirm'
+         */
+        "confirmLabel": string;
+        /**
+          * Dialog title (plan name: `title`). Named `heading` to avoid clashing with the native HTMLElement `title` attribute.
+          * @default ''
+         */
+        "heading": string;
+        /**
+          * Hide the confirm button when only dismiss is needed.
+          * @default false
+         */
+        "hideConfirm": boolean;
+        /**
+          * Whether the dialog is visible.
+          * @default false
+         */
+        "open": boolean;
+    }
+    /**
      * Controlled search field with internal debounce on change.
      * | Event | Payload | When |
      * | --- | --- | --- |
@@ -157,10 +267,48 @@ export namespace Components {
          */
         "value": string;
     }
+    /**
+     * Informational toast. Auto-dismisses after 3500ms by default.
+     * No output events — display only. Toggle `visible` (or remount) to re-show.
+     * | Prop | Notes |
+     * | --- | --- |
+     * | `message` | Body text |
+     * | `type` | `success` \| `error` \| `info` |
+     * | `visible` | Host can hide/show or remount to re-trigger the timer |
+     * | `duration` | Dismiss delay in ms (default 3500) |
+     */
+    interface ToastNotification {
+        /**
+          * Override dismiss duration (ms). Defaults to 3500.
+          * @default 3500
+         */
+        "duration": number;
+        /**
+          * @default ''
+         */
+        "message": string;
+        /**
+          * @default 'info'
+         */
+        "type": ToastType;
+        /**
+          * When false, the toast is hidden. Flipping false→true restarts the dismiss timer.
+          * @default true
+         */
+        "visible": boolean;
+    }
+}
+export interface DayColumnCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLDayColumnElement;
 }
 export interface FilterChipGroupCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLFilterChipGroupElement;
+}
+export interface FormInputCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLFormInputElement;
 }
 export interface RatingStarsCustomEvent<T> extends CustomEvent<T> {
     detail: T;
@@ -170,19 +318,43 @@ export interface RecipeCardCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLRecipeCardElement;
 }
+export interface RfModalCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLRfModalElement;
+}
 export interface SearchBarCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLSearchBarElement;
 }
 declare global {
+    interface HTMLDayColumnElementEventMap {
+        "mealDrop": { recipeId: string; day: string };
+        "mealRemove": { entryId: string; day: string; recipeId?: string };
+    }
     /**
-     * Placeholder for empty favorites, search results, or planner days.
-     * | Prop | Description |
-     * | --- | --- |
-     * | `message` | Primary copy |
-     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
-     * Slot: optional action content (e.g. a button).
+     * Weekly planner day column — presentational only (no persistence).
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `mealDrop` | `{ recipeId: string; day: string }` | Recipe assigned via DnD **or** tap fallback |
+     * | `mealRemove` | `{ entryId: string; day: string; recipeId?: string }` | Remove control on a meal |
+     * Slot: default empty-state content when `meals` is empty.
+     * Tap fallback: when `pendingRecipeId` is set, “Assign here” emits the same `mealDrop` shape as a drop.
+     * DnD reads `application/x-recipe-id` (preferred) or `text/plain`.
      */
+    interface HTMLDayColumnElement extends Components.DayColumn, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLDayColumnElementEventMap>(type: K, listener: (this: HTMLDayColumnElement, ev: DayColumnCustomEvent<HTMLDayColumnElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLDayColumnElementEventMap>(type: K, listener: (this: HTMLDayColumnElement, ev: DayColumnCustomEvent<HTMLDayColumnElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLDayColumnElement: {
+        prototype: HTMLDayColumnElement;
+        new (): HTMLDayColumnElement;
+    };
     interface HTMLEmptyStateElement extends Components.EmptyState, HTMLStencilElement {
     }
     var HTMLEmptyStateElement: {
@@ -212,6 +384,31 @@ declare global {
     var HTMLFilterChipGroupElement: {
         prototype: HTMLFilterChipGroupElement;
         new (): HTMLFilterChipGroupElement;
+    };
+    interface HTMLFormInputElementEventMap {
+        "valueChange": { value: string };
+    }
+    /**
+     * Labeled text control with optional validation message.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `valueChange` | `{ value: string }` | Input value changes |
+     * Parent owns `value` and `error`. Label is associated via `for`/`id`.
+     * When `error` is set, the control is `aria-invalid` and described by the error text.
+     */
+    interface HTMLFormInputElement extends Components.FormInput, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLFormInputElementEventMap>(type: K, listener: (this: HTMLFormInputElement, ev: FormInputCustomEvent<HTMLFormInputElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLFormInputElementEventMap>(type: K, listener: (this: HTMLFormInputElement, ev: FormInputCustomEvent<HTMLFormInputElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLFormInputElement: {
+        prototype: HTMLFormInputElement;
+        new (): HTMLFormInputElement;
     };
     interface HTMLRatingStarsElementEventMap {
         "ratingChange": { value: number };
@@ -277,6 +474,35 @@ declare global {
         prototype: HTMLRecipeGridElement;
         new (): HTMLRecipeGridElement;
     };
+    interface HTMLRfModalElementEventMap {
+        "close": void;
+        "confirm": void;
+    }
+    /**
+     * Confirm/cancel dialog with a default body slot.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `close` | `void` | Cancel, backdrop, Escape, or explicit dismiss |
+     * | `confirm` | `void` | Confirm button activated |
+     * Plan prop `title` maps to `heading` (avoids clashing with HTMLElement.title).
+     * Tag is `rf-modal` (custom elements require a hyphen; folder stays `modal`).
+     * When `open` is false the dialog is not rendered, so nothing inside stays tabbable.
+     * Focus is trapped while open; previous focus is restored on close.
+     */
+    interface HTMLRfModalElement extends Components.RfModal, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLRfModalElementEventMap>(type: K, listener: (this: HTMLRfModalElement, ev: RfModalCustomEvent<HTMLRfModalElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLRfModalElementEventMap>(type: K, listener: (this: HTMLRfModalElement, ev: RfModalCustomEvent<HTMLRfModalElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLRfModalElement: {
+        prototype: HTMLRfModalElement;
+        new (): HTMLRfModalElement;
+    };
     interface HTMLSearchBarElementEventMap {
         "searchChange": { value: string };
         "searchSubmit": { value: string };
@@ -304,24 +530,70 @@ declare global {
         prototype: HTMLSearchBarElement;
         new (): HTMLSearchBarElement;
     };
+    /**
+     * Informational toast. Auto-dismisses after 3500ms by default.
+     * No output events — display only. Toggle `visible` (or remount) to re-show.
+     * | Prop | Notes |
+     * | --- | --- |
+     * | `message` | Body text |
+     * | `type` | `success` \| `error` \| `info` |
+     * | `visible` | Host can hide/show or remount to re-trigger the timer |
+     * | `duration` | Dismiss delay in ms (default 3500) |
+     */
+    interface HTMLToastNotificationElement extends Components.ToastNotification, HTMLStencilElement {
+    }
+    var HTMLToastNotificationElement: {
+        prototype: HTMLToastNotificationElement;
+        new (): HTMLToastNotificationElement;
+    };
     interface HTMLElementTagNameMap {
+        "day-column": HTMLDayColumnElement;
         "empty-state": HTMLEmptyStateElement;
         "filter-chip-group": HTMLFilterChipGroupElement;
+        "form-input": HTMLFormInputElement;
         "rating-stars": HTMLRatingStarsElement;
         "recipe-card": HTMLRecipeCardElement;
         "recipe-grid": HTMLRecipeGridElement;
+        "rf-modal": HTMLRfModalElement;
         "search-bar": HTMLSearchBarElement;
+        "toast-notification": HTMLToastNotificationElement;
     }
 }
 declare namespace LocalJSX {
     /**
-     * Placeholder for empty favorites, search results, or planner days.
-     * | Prop | Description |
-     * | --- | --- |
-     * | `message` | Primary copy |
-     * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
-     * Slot: optional action content (e.g. a button).
+     * Weekly planner day column — presentational only (no persistence).
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `mealDrop` | `{ recipeId: string; day: string }` | Recipe assigned via DnD **or** tap fallback |
+     * | `mealRemove` | `{ entryId: string; day: string; recipeId?: string }` | Remove control on a meal |
+     * Slot: default empty-state content when `meals` is empty.
+     * Tap fallback: when `pendingRecipeId` is set, “Assign here” emits the same `mealDrop` shape as a drop.
+     * DnD reads `application/x-recipe-id` (preferred) or `text/plain`.
      */
+    interface DayColumn {
+        /**
+          * Stable day key included in event payloads (e.g. `monday`).
+          * @default ''
+         */
+        "day"?: string;
+        /**
+          * Display label; falls back to `day` when empty.
+          * @default ''
+         */
+        "label"?: string;
+        /**
+          * Assigned meals for this day.
+          * @default []
+         */
+        "meals"?: DayMealItem[];
+        "onMealDrop"?: (event: DayColumnCustomEvent<{ recipeId: string; day: string }>) => void;
+        "onMealRemove"?: (event: DayColumnCustomEvent<{ entryId: string; day: string; recipeId?: string }>) => void;
+        /**
+          * Recipe id waiting to be assigned (host selection). Enables the tap-to-assign control when set.
+          * @default ''
+         */
+        "pendingRecipeId"?: string;
+    }
     interface EmptyState {
         /**
           * Named icon key or absolute/relative image URL.
@@ -357,6 +629,57 @@ declare namespace LocalJSX {
           * @default []
          */
         "selected"?: string[];
+    }
+    /**
+     * Labeled text control with optional validation message.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `valueChange` | `{ value: string }` | Input value changes |
+     * Parent owns `value` and `error`. Label is associated via `for`/`id`.
+     * When `error` is set, the control is `aria-invalid` and described by the error text.
+     */
+    interface FormInput {
+        /**
+          * Accessible autocomplete hint when relevant.
+          * @default ''
+         */
+        "autocomplete"?: string;
+        /**
+          * @default false
+         */
+        "disabled"?: boolean;
+        /**
+          * Validation message; empty/undefined hides the error region.
+          * @default ''
+         */
+        "error"?: string;
+        /**
+          * @default ''
+         */
+        "label"?: string;
+        /**
+          * @default ''
+         */
+        "name"?: string;
+        "onValueChange"?: (event: FormInputCustomEvent<{ value: string }>) => void;
+        /**
+          * @default ''
+         */
+        "placeholder"?: string;
+        /**
+          * @default false
+         */
+        "required"?: boolean;
+        /**
+          * Native input type (text, email, password, number, …).
+          * @default 'text'
+         */
+        "type"?: string;
+        /**
+          * Controlled value from the parent.
+          * @default ''
+         */
+        "value"?: string;
     }
     /**
      * Integer star rating control (1–5). No fractional/half-star API.
@@ -443,6 +766,44 @@ declare namespace LocalJSX {
         "columns"?: number;
     }
     /**
+     * Confirm/cancel dialog with a default body slot.
+     * | Event | Payload | When |
+     * | --- | --- | --- |
+     * | `close` | `void` | Cancel, backdrop, Escape, or explicit dismiss |
+     * | `confirm` | `void` | Confirm button activated |
+     * Plan prop `title` maps to `heading` (avoids clashing with HTMLElement.title).
+     * Tag is `rf-modal` (custom elements require a hyphen; folder stays `modal`).
+     * When `open` is false the dialog is not rendered, so nothing inside stays tabbable.
+     * Focus is trapped while open; previous focus is restored on close.
+     */
+    interface RfModal {
+        /**
+          * @default 'Cancel'
+         */
+        "cancelLabel"?: string;
+        /**
+          * @default 'Confirm'
+         */
+        "confirmLabel"?: string;
+        /**
+          * Dialog title (plan name: `title`). Named `heading` to avoid clashing with the native HTMLElement `title` attribute.
+          * @default ''
+         */
+        "heading"?: string;
+        /**
+          * Hide the confirm button when only dismiss is needed.
+          * @default false
+         */
+        "hideConfirm"?: boolean;
+        "onClose"?: (event: RfModalCustomEvent<void>) => void;
+        "onConfirm"?: (event: RfModalCustomEvent<void>) => void;
+        /**
+          * Whether the dialog is visible.
+          * @default false
+         */
+        "open"?: boolean;
+    }
+    /**
      * Controlled search field with internal debounce on change.
      * | Event | Payload | When |
      * | --- | --- | --- |
@@ -469,13 +830,59 @@ declare namespace LocalJSX {
          */
         "value"?: string;
     }
+    /**
+     * Informational toast. Auto-dismisses after 3500ms by default.
+     * No output events — display only. Toggle `visible` (or remount) to re-show.
+     * | Prop | Notes |
+     * | --- | --- |
+     * | `message` | Body text |
+     * | `type` | `success` \| `error` \| `info` |
+     * | `visible` | Host can hide/show or remount to re-trigger the timer |
+     * | `duration` | Dismiss delay in ms (default 3500) |
+     */
+    interface ToastNotification {
+        /**
+          * Override dismiss duration (ms). Defaults to 3500.
+          * @default 3500
+         */
+        "duration"?: number;
+        /**
+          * @default ''
+         */
+        "message"?: string;
+        /**
+          * @default 'info'
+         */
+        "type"?: ToastType;
+        /**
+          * When false, the toast is hidden. Flipping false→true restarts the dismiss timer.
+          * @default true
+         */
+        "visible"?: boolean;
+    }
 
+    interface DayColumnAttributes {
+        "day": string;
+        "label": string;
+        "pendingRecipeId": string;
+    }
     interface EmptyStateAttributes {
         "message": string;
         "icon": string;
     }
     interface FilterChipGroupAttributes {
         "label": string;
+    }
+    interface FormInputAttributes {
+        "label": string;
+        "value": string;
+        "error": string;
+        "required": boolean;
+        "disabled": boolean;
+        "type": string;
+        "name": string;
+        "placeholder": string;
+        "autocomplete": string;
     }
     interface RatingStarsAttributes {
         "value": number;
@@ -493,19 +900,36 @@ declare namespace LocalJSX {
     interface RecipeGridAttributes {
         "columns": number;
     }
+    interface RfModalAttributes {
+        "open": boolean;
+        "heading": string;
+        "confirmLabel": string;
+        "cancelLabel": string;
+        "hideConfirm": boolean;
+    }
     interface SearchBarAttributes {
         "placeholder": string;
         "value": string;
         "label": string;
     }
+    interface ToastNotificationAttributes {
+        "message": string;
+        "type": ToastType;
+        "visible": boolean;
+        "duration": number;
+    }
 
     interface IntrinsicElements {
+        "day-column": Omit<DayColumn, keyof DayColumnAttributes> & { [K in keyof DayColumn & keyof DayColumnAttributes]?: DayColumn[K] } & { [K in keyof DayColumn & keyof DayColumnAttributes as `attr:${K}`]?: DayColumnAttributes[K] } & { [K in keyof DayColumn & keyof DayColumnAttributes as `prop:${K}`]?: DayColumn[K] };
         "empty-state": Omit<EmptyState, keyof EmptyStateAttributes> & { [K in keyof EmptyState & keyof EmptyStateAttributes]?: EmptyState[K] } & { [K in keyof EmptyState & keyof EmptyStateAttributes as `attr:${K}`]?: EmptyStateAttributes[K] } & { [K in keyof EmptyState & keyof EmptyStateAttributes as `prop:${K}`]?: EmptyState[K] };
         "filter-chip-group": Omit<FilterChipGroup, keyof FilterChipGroupAttributes> & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes]?: FilterChipGroup[K] } & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes as `attr:${K}`]?: FilterChipGroupAttributes[K] } & { [K in keyof FilterChipGroup & keyof FilterChipGroupAttributes as `prop:${K}`]?: FilterChipGroup[K] };
+        "form-input": Omit<FormInput, keyof FormInputAttributes> & { [K in keyof FormInput & keyof FormInputAttributes]?: FormInput[K] } & { [K in keyof FormInput & keyof FormInputAttributes as `attr:${K}`]?: FormInputAttributes[K] } & { [K in keyof FormInput & keyof FormInputAttributes as `prop:${K}`]?: FormInput[K] };
         "rating-stars": Omit<RatingStars, keyof RatingStarsAttributes> & { [K in keyof RatingStars & keyof RatingStarsAttributes]?: RatingStars[K] } & { [K in keyof RatingStars & keyof RatingStarsAttributes as `attr:${K}`]?: RatingStarsAttributes[K] } & { [K in keyof RatingStars & keyof RatingStarsAttributes as `prop:${K}`]?: RatingStars[K] };
         "recipe-card": Omit<RecipeCard, keyof RecipeCardAttributes> & { [K in keyof RecipeCard & keyof RecipeCardAttributes]?: RecipeCard[K] } & { [K in keyof RecipeCard & keyof RecipeCardAttributes as `attr:${K}`]?: RecipeCardAttributes[K] } & { [K in keyof RecipeCard & keyof RecipeCardAttributes as `prop:${K}`]?: RecipeCard[K] };
         "recipe-grid": Omit<RecipeGrid, keyof RecipeGridAttributes> & { [K in keyof RecipeGrid & keyof RecipeGridAttributes]?: RecipeGrid[K] } & { [K in keyof RecipeGrid & keyof RecipeGridAttributes as `attr:${K}`]?: RecipeGridAttributes[K] } & { [K in keyof RecipeGrid & keyof RecipeGridAttributes as `prop:${K}`]?: RecipeGrid[K] };
+        "rf-modal": Omit<RfModal, keyof RfModalAttributes> & { [K in keyof RfModal & keyof RfModalAttributes]?: RfModal[K] } & { [K in keyof RfModal & keyof RfModalAttributes as `attr:${K}`]?: RfModalAttributes[K] } & { [K in keyof RfModal & keyof RfModalAttributes as `prop:${K}`]?: RfModal[K] };
         "search-bar": Omit<SearchBar, keyof SearchBarAttributes> & { [K in keyof SearchBar & keyof SearchBarAttributes]?: SearchBar[K] } & { [K in keyof SearchBar & keyof SearchBarAttributes as `attr:${K}`]?: SearchBarAttributes[K] } & { [K in keyof SearchBar & keyof SearchBarAttributes as `prop:${K}`]?: SearchBar[K] };
+        "toast-notification": Omit<ToastNotification, keyof ToastNotificationAttributes> & { [K in keyof ToastNotification & keyof ToastNotificationAttributes]?: ToastNotification[K] } & { [K in keyof ToastNotification & keyof ToastNotificationAttributes as `attr:${K}`]?: ToastNotificationAttributes[K] } & { [K in keyof ToastNotification & keyof ToastNotificationAttributes as `prop:${K}`]?: ToastNotification[K] };
     }
 }
 export { LocalJSX as JSX };
@@ -513,13 +937,16 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             /**
-             * Placeholder for empty favorites, search results, or planner days.
-             * | Prop | Description |
-             * | --- | --- |
-             * | `message` | Primary copy |
-             * | `icon` | Optional icon name (`search`, `heart`, `calendar`, `inbox`) or image URL |
-             * Slot: optional action content (e.g. a button).
+             * Weekly planner day column — presentational only (no persistence).
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `mealDrop` | `{ recipeId: string; day: string }` | Recipe assigned via DnD **or** tap fallback |
+             * | `mealRemove` | `{ entryId: string; day: string; recipeId?: string }` | Remove control on a meal |
+             * Slot: default empty-state content when `meals` is empty.
+             * Tap fallback: when `pendingRecipeId` is set, “Assign here” emits the same `mealDrop` shape as a drop.
+             * DnD reads `application/x-recipe-id` (preferred) or `text/plain`.
              */
+            "day-column": LocalJSX.IntrinsicElements["day-column"] & JSXBase.HTMLAttributes<HTMLDayColumnElement>;
             "empty-state": LocalJSX.IntrinsicElements["empty-state"] & JSXBase.HTMLAttributes<HTMLEmptyStateElement>;
             /**
              * Multi-select chip group.
@@ -529,6 +956,15 @@ declare module "@stencil/core" {
              * Props: `options` (`{ label, value }[]`), `selected` (string[] of values).
              */
             "filter-chip-group": LocalJSX.IntrinsicElements["filter-chip-group"] & JSXBase.HTMLAttributes<HTMLFilterChipGroupElement>;
+            /**
+             * Labeled text control with optional validation message.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `valueChange` | `{ value: string }` | Input value changes |
+             * Parent owns `value` and `error`. Label is associated via `for`/`id`.
+             * When `error` is set, the control is `aria-invalid` and described by the error text.
+             */
+            "form-input": LocalJSX.IntrinsicElements["form-input"] & JSXBase.HTMLAttributes<HTMLFormInputElement>;
             /**
              * Integer star rating control (1–5). No fractional/half-star API.
              * | Event | Payload | When |
@@ -556,6 +992,18 @@ declare module "@stencil/core" {
              */
             "recipe-grid": LocalJSX.IntrinsicElements["recipe-grid"] & JSXBase.HTMLAttributes<HTMLRecipeGridElement>;
             /**
+             * Confirm/cancel dialog with a default body slot.
+             * | Event | Payload | When |
+             * | --- | --- | --- |
+             * | `close` | `void` | Cancel, backdrop, Escape, or explicit dismiss |
+             * | `confirm` | `void` | Confirm button activated |
+             * Plan prop `title` maps to `heading` (avoids clashing with HTMLElement.title).
+             * Tag is `rf-modal` (custom elements require a hyphen; folder stays `modal`).
+             * When `open` is false the dialog is not rendered, so nothing inside stays tabbable.
+             * Focus is trapped while open; previous focus is restored on close.
+             */
+            "rf-modal": LocalJSX.IntrinsicElements["rf-modal"] & JSXBase.HTMLAttributes<HTMLRfModalElement>;
+            /**
              * Controlled search field with internal debounce on change.
              * | Event | Payload | When |
              * | --- | --- | --- |
@@ -565,6 +1013,17 @@ declare module "@stencil/core" {
              * A local draft keeps the input responsive between parent updates.
              */
             "search-bar": LocalJSX.IntrinsicElements["search-bar"] & JSXBase.HTMLAttributes<HTMLSearchBarElement>;
+            /**
+             * Informational toast. Auto-dismisses after 3500ms by default.
+             * No output events — display only. Toggle `visible` (or remount) to re-show.
+             * | Prop | Notes |
+             * | --- | --- |
+             * | `message` | Body text |
+             * | `type` | `success` \| `error` \| `info` |
+             * | `visible` | Host can hide/show or remount to re-trigger the timer |
+             * | `duration` | Dismiss delay in ms (default 3500) |
+             */
+            "toast-notification": LocalJSX.IntrinsicElements["toast-notification"] & JSXBase.HTMLAttributes<HTMLToastNotificationElement>;
         }
     }
 }

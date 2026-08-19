@@ -1,0 +1,79 @@
+:host {
+  display: contents;
+  font-family: var(--rf-font-sans);
+  color: var(--rf-color-text);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: var(--rf-space-4);
+  background: color-mix(in srgb, var(--rf-color-text) 45%, transparent);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rf-space-4);
+  width: min(28rem, 100%);
+  max-height: min(90vh, 40rem);
+  padding: var(--rf-space-5);
+  border-radius: var(--rf-radius-lg);
+  background: var(--rf-color-surface);
+  box-shadow: var(--rf-shadow-md);
+  outline: none;
+}
+
+.header {
+  margin: 0;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--rf-font-display);
+  font-size: var(--rf-font-size-lg);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.body {
+  overflow: auto;
+  color: var(--rf-color-text);
+  font-size: var(--rf-font-size-md);
+  line-height: var(--rf-line-height);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--rf-space-2);
+}
+
+.btn {
+  padding: var(--rf-space-2) var(--rf-space-4);
+  border-radius: var(--rf-radius-md);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--rf-color-primary);
+  outline-offset: 2px;
+}
+
+.btn--ghost {
+  border: 1px solid var(--rf-color-border);
+  background: var(--rf-color-surface);
+  color: var(--rf-color-text);
+}
+
+.btn--primary {
+  border: 0;
+  background: var(--rf-color-primary);
+  color: var(--rf-color-primary-contrast);
+}
