@@ -5,17 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Labeled text control with optional validation message.
-
-| Event | Payload | When |
-| --- | --- | --- |
-| `valueChange` | `{ value: string }` | Input value changes |
-
-Parent owns `value` and `error`. Label is associated via `for`/`id`.
-When `error` is set, the control is `aria-invalid` and described by the error text.
-
 ## Properties
 
 | Property       | Attribute      | Description                                                 | Type      | Default  |

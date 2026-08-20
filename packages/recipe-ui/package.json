@@ -12,12 +12,14 @@
   "exports": {
     ".": {
       "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.js"
+      "import": "./dist/components/index.js",
+      "default": "./dist/components/index.js"
     },
     "./loader": {
       "types": "./loader/index.d.ts",
       "import": "./loader/index.js",
-      "require": "./loader/index.cjs.js"
+      "require": "./loader/index.cjs.js",
+      "default": "./loader/index.js"
     },
     "./global.css": "./dist/recipe-ui/recipe-ui.css",
     "./components/*": "./dist/components/*",
@@ -26,6 +28,10 @@
   "files": [
     "dist/",
     "loader/"
+  ],
+  "sideEffects": [
+    "./dist/components/index.js",
+    "./loader/index.js"
   ],
   "scripts": {
     "build": "stencil build",

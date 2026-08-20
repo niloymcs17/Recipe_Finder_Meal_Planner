@@ -1,12 +1,20 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { registerRecipeUi } from '$lib/ui/register';
+	import '../app.css';
 
 	let { children } = $props();
 
 	$effect(() => {
 		authStore.hydrate();
+	});
+
+	// Register Stencil CEs once for every route (browser-only; SSR-safe).
+	onMount(() => {
+		void registerRecipeUi();
 	});
 
 	function handleLogout() {

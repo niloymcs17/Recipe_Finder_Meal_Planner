@@ -5,19 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Weekly planner day column — presentational only (no persistence).
-
-| Event | Payload | When |
-| --- | --- | --- |
-| `mealDrop` | `{ recipeId: string; day: string }` | Recipe assigned via DnD **or** tap fallback |
-| `mealRemove` | `{ entryId: string; day: string; recipeId?: string }` | Remove control on a meal |
-
-Slot: default empty-state content when `meals` is empty.
-Tap fallback: when `pendingRecipeId` is set, “Assign here” emits the same `mealDrop` shape as a drop.
-DnD reads `application/x-recipe-id` (preferred) or `text/plain`.
-
 ## Properties
 
 | Property          | Attribute           | Description                                                                                    | Type            | Default |

@@ -5,19 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Informational toast. Auto-dismisses after 3500ms by default.
-
-No output events — display only. Toggle `visible` (or remount) to re-show.
-
-| Prop | Notes |
-| --- | --- |
-| `message` | Body text |
-| `type` | `success` \| `error` \| `info` |
-| `visible` | Host can hide/show or remount to re-trigger the timer |
-| `duration` | Dismiss delay in ms (default 3500) |
-
 ## Properties
 
 | Property   | Attribute  | Description                                                                      | Type                             | Default  |

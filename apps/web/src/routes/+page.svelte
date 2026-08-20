@@ -24,6 +24,10 @@
 			<a href="/login">log in</a>.
 		</p>
 	{/if}
+
+	<p class="dev-link">
+		<a href="/dev/ui">UI component smoke page</a> (Phase 06)
+	</p>
 </section>
 
 <style>
@@ -51,5 +55,10 @@
 
 	a {
 		color: #1f5c3a;
+	}
+
+	.dev-link {
+		margin-top: 2rem;
+		font-size: 0.95rem;
 	}
 </style>

@@ -1,0 +1,13 @@
+/**
+ * Host theme bridge — load UI tokens, then override a few for the product look.
+ * Proves `--rf-*` theming works from the SvelteKit app.
+ */
+@import '@recipe-finder/ui/global.css';
+
+:root {
+	--rf-color-primary: #1f5c3a;
+	--rf-color-primary-contrast: #ffffff;
+	--rf-color-bg: #f7f5f0;
+	--rf-font-display: Georgia, 'Times New Roman', serif;
+	--rf-font-sans: Georgia, 'Times New Roman', serif;
+}

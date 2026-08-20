@@ -5,20 +5,6 @@
 <!-- Auto Generated Below -->
 
 
-## Overview
-
-Confirm/cancel dialog with a default body slot.
-
-| Event | Payload | When |
-| --- | --- | --- |
-| `close` | `void` | Cancel, backdrop, Escape, or explicit dismiss |
-| `confirm` | `void` | Confirm button activated |
-
-Plan prop `title` maps to `heading` (avoids clashing with HTMLElement.title).
-Tag is `rf-modal` (custom elements require a hyphen; folder stays `modal`).
-When `open` is false the dialog is not rendered, so nothing inside stays tabbable.
-Focus is trapped while open; previous focus is restored on close.
-
 ## Properties
 
 | Property       | Attribute       | Description                                                                                                         | Type      | Default     |

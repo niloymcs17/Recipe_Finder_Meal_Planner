@@ -19,9 +19,15 @@ Or from this package: `pnpm start` / `pnpm build`.
 | `dist/` | Library bundle + collection |
 | `dist/components/` | **Custom elements** (`dist-custom-elements`, `bundle` export) |
 | `loader/` | Lazy `defineCustomElements` from the `dist` target |
-| `dist/recipe-ui/recipe-ui.css` | Bundled global theme tokens |
+| `dist/recipe-ui/recipe-ui.css` | Bundled global theme tokens (`@recipe-finder/ui/global.css`) |
 
-## Register custom elements (SvelteKit / Phase 06)
+Published tarball includes only `dist/` and `loader/` (see `"files"` in `package.json`).
+
+## Consume in the monorepo (day-to-day)
+
+`apps/web` depends on `"@recipe-finder/ui": "workspace:*"`. Root `pnpm build` builds UI before web so `dist` exists for CI/deploy.
+
+## Register custom elements (SvelteKit)
 
 Preferred one-shot registration from the custom-elements bundle:
 
@@ -31,7 +37,7 @@ import { defineCustomElements } from '@recipe-finder/ui';
 defineCustomElements();
 ```
 
-Lazy loader alternative (same API name, from the `dist` output):
+Lazy loader alternative:
 
 ```ts
 import { defineCustomElements } from '@recipe-finder/ui/loader';
@@ -39,7 +45,12 @@ import { defineCustomElements } from '@recipe-finder/ui/loader';
 defineCustomElements();
 ```
 
-Call once in the browser (e.g. root layout `onMount` / `browser` guard). Do not register per route.
+Call **once** in the browser (root layout via `$lib/ui/register.ts` — `browser` guard + dynamic import). Do not register per route.
+
+### SSR / Vite notes (chosen approach)
+
+1. Register only on the client (`browser` / `onMount` + dynamic `import('@recipe-finder/ui')`) so Node never executes CE `define` during SSR.
+2. In `apps/web/vite.config.ts`, set `ssr.noExternal: ['@recipe-finder/ui']` so Vite can resolve the package if it is pulled into the SSR graph, and `optimizeDeps.include` for the client prebundle.
 
 ## Theming
 
@@ -51,7 +62,7 @@ Load the stylesheet once in the host app, then override any `--rf-*` variable on
 @import '@recipe-finder/ui/global.css';
 
 :root {
-  --rf-color-primary: #0d9488;
+  --rf-color-primary: #1f5c3a;
   --rf-font-sans: 'Your Font', sans-serif;
 }
 ```
@@ -61,7 +72,25 @@ Dark mode:
 - Automatic: `@media (prefers-color-scheme: dark)` when `data-theme` is unset
 - Explicit: set `data-theme="dark"` or `data-theme="light"` on `<html>`
 
-Token categories: colors (`--rf-color-*`), spacing (`--rf-space-*`), radii, fonts/sizes, shadows. Components must use these variables — no hardcoded palettes.
+## Publish to npm (assignment / demo)
+
+Local development stays on `workspace:*`. Publish only when you need a public package (demo, external consumer). No tokens or secrets belong in this repo — use `npm login` on your machine.
+
+```bash
+# 1. Build artifacts
+pnpm --filter @recipe-finder/ui build
+
+# 2. Bump version in packages/recipe-ui/package.json (keep 0.x while unstable)
+
+# 3. Allow publish (package is "private": true in the monorepo)
+#    Temporarily set "private": false, or remove the field.
+
+# 4. Publish
+cd packages/recipe-ui
+npm publish --access public
+```
+
+Consumers then install `@recipe-finder/ui` from npm instead of `workspace:*`. Switch back to workspace linking for local monorepo work.
 
 ## Utils
 
