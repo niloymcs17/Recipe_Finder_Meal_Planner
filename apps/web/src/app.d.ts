@@ -20,11 +20,16 @@ declare module 'svelte/elements' {
 			rating?: number;
 			'recipe-id'?: string;
 			favorited?: boolean;
+			tags?: string[];
+			onrecipeselect?: (event: Event) => void;
+			onfavoritetoggle?: (event: Event) => void;
 		};
 		'search-bar': import('svelte/elements').HTMLAttributes<HTMLElement> & {
 			placeholder?: string;
 			value?: string;
 			label?: string;
+			onsearchchange?: (event: Event) => void;
+			onsearchsubmit?: (event: Event) => void;
 		};
 		'empty-state': import('svelte/elements').HTMLAttributes<HTMLElement> & {
 			message?: string;
@@ -33,7 +38,12 @@ declare module 'svelte/elements' {
 		'recipe-grid': import('svelte/elements').HTMLAttributes<HTMLElement> & {
 			columns?: number;
 		};
-		'filter-chip-group': import('svelte/elements').HTMLAttributes<HTMLElement>;
+		'filter-chip-group': import('svelte/elements').HTMLAttributes<HTMLElement> & {
+			label?: string;
+			options?: { label: string; value: string }[];
+			selected?: string[];
+			onfilterchange?: (event: Event) => void;
+		};
 		'rating-stars': import('svelte/elements').HTMLAttributes<HTMLElement> & {
 			value?: number;
 			readonly?: boolean;
