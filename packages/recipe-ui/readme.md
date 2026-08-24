@@ -92,6 +92,8 @@ npm publish --access public
 
 Consumers then install `@recipe-finder/ui` from npm instead of `workspace:*`. Switch back to workspace linking for local monorepo work.
 
+**Graders / monorepo demos:** keep `"@recipe-finder/ui": "workspace:*"` in `apps/web/package.json` and run `pnpm build` from the repo root — no npm publish required.
+
 ## Utils
 
 - `debounce` — shared helper for search-bar internal debounce (~300–400ms). Source: `src/utils/debounce.ts`.

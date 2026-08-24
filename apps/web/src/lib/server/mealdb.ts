@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/private';
+import { getMealDbBaseUrl } from '$lib/server/env';
 import { stripHtml } from '$lib/server/sanitize';
 import type { Recipe, RecipeIngredient } from '$lib/types/recipe';
 import { toMealDbId } from '$lib/utils/ids';
@@ -28,7 +28,6 @@ export const FALLBACK_CATEGORIES = [
 	'Vegetarian'
 ];
 
-const DEFAULT_BASE = 'https://www.themealdb.com/api/json/v1/1';
 const FETCH_MS = 10_000;
 const MAX_RESULTS = 36;
 
@@ -39,8 +38,7 @@ type MealsPayload = {
 };
 
 function baseUrl(): string {
-	const raw = env.MEALDB_BASE_URL?.trim() || DEFAULT_BASE;
-	return raw.replace(/\/$/, '');
+	return getMealDbBaseUrl();
 }
 
 function asMeals(payload: MealsPayload): MealRecord[] {

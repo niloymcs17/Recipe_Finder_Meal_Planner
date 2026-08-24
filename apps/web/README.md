@@ -2,11 +2,12 @@
 
 SvelteKit app for Recipe Finder & Meal Planner.
 
-## Auth & database 
+## Auth & database
 
 - **Browser localStorage only** — no Supabase / cloud DB
 - Local email/password auth + repositories under `src/lib/local-db/`
-- Env: MealDB base URL only (see `.env.example`)
+- Password hashing is **demo-grade** (Web Crypto SHA-256 in the client) — not production security
+- Env: MealDB base URL only (see `.env.example`); validated in `src/lib/server/env.ts`
 
 ```bash
 # from monorepo root
@@ -19,7 +20,7 @@ Favorites and meal-plan entries are stored in **this browser’s localStorage** 
 
 User recipes are saved in **this browser’s localStorage**. Refresh keeps them; clearing site data or using another browser does not.
 
-## Stencil UI 
+## Stencil UI
 
 Depends on `@recipe-finder/ui` via `workspace:*`.
 
@@ -32,3 +33,22 @@ Depends on `@recipe-finder/ui` via `workspace:*`.
 pnpm --filter @recipe-finder/ui build
 pnpm --filter @recipe-finder/web dev
 ```
+
+## Build & deploy
+
+
+
+```bash
+pnpm --filter @recipe-finder/ui build
+pnpm --filter @recipe-finder/web build
+pnpm --filter @recipe-finder/web preview   # local production preview
+```
+
+Set `MEALDB_BASE_URL` in the host env dashboard if you need a non-default TheMealDB endpoint.
+
+## UX polish (Phase 10)
+
+- Global error boundary (`+error.svelte`)
+- Delayed loading indicators on discovery grid, favorites, planner week, and recipe details
+- Toasts on auth, CRUD, favorites, and planner mutations
+- Site-wide localStorage notice in root layout

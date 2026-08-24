@@ -12,7 +12,9 @@
 	import type { MealPlanEntry, MealType, WeekDay } from '$lib/local-db/types';
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
+	import LoadingIndicator from '$lib/ui/LoadingIndicator.svelte';
 	import { addWeeks, formatWeekRange, startOfWeek, weekDayMeta } from '$lib/utils/dates';
+	import { scheduleDelayedLoading } from '$lib/utils/delayed-loading';
 	import { parseRecipeId } from '$lib/utils/ids';
 
 	const RECIPE_DRAG_MIME = 'application/x-recipe-id';
@@ -35,6 +37,7 @@
 	let assignDay = $state<WeekDay>('monday');
 	let assignMealType = $state<MealType | ''>('');
 	let requestSeq = 0;
+	let resolving = $state(false);
 
 	const days = $derived(weekDayMeta(plannerStore.weekStart));
 	const weekLabel = $derived(formatWeekRange(plannerStore.weekStart));
@@ -96,9 +99,16 @@
 		const ids = neededIds;
 		if (!browser) return;
 		const pending = ids.filter((id) => cache[id] === undefined);
-		if (pending.length === 0) return;
+		if (pending.length === 0) {
+			resolving = false;
+			return;
+		}
 		const seq = ++requestSeq;
+		const stopDelayed = scheduleDelayedLoading((value) => {
+			if (seq === requestSeq) resolving = value;
+		});
 		void resolveRecipes(pending).then((map) => {
+			stopDelayed();
 			if (seq !== requestSeq) return;
 			const next = { ...cache };
 			for (const id of pending) {
@@ -281,6 +291,10 @@
 			Shopping list
 		</button>
 	</div>
+
+	{#if resolving}
+		<LoadingIndicator label="Loading week…" />
+	{/if}
 
 	<section class="tray">
 		<h2>Assign a recipe</h2>

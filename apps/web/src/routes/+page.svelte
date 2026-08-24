@@ -11,6 +11,8 @@
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
+	import LoadingIndicator from '$lib/ui/LoadingIndicator.svelte';
+	import { scheduleDelayedLoading } from '$lib/utils/delayed-loading';
 	import type { PageData } from './$types';
 
 	const MINE_VALUE = '__mine__';
@@ -27,6 +29,8 @@
 	let requestSeq = 0;
 	let clientReady = $state(false);
 	let rootEl = $state<HTMLElement | null>(null);
+	let showLoading = $state(false);
+	let stopLoadingDelay: (() => void) | null = null;
 
 	const mealdbRecipes = $derived(clientMealdb ?? data.recipes);
 	const errorMessage = $derived(clientError !== undefined ? clientError : data.error);
@@ -92,6 +96,10 @@
 		abort = controller;
 		const seq = ++requestSeq;
 		loading = true;
+		stopLoadingDelay?.();
+		stopLoadingDelay = scheduleDelayedLoading((value) => {
+			if (seq === requestSeq) showLoading = value;
+		});
 		clientError = null;
 
 		try {
@@ -114,7 +122,12 @@
 			clientError = message;
 			toastStore.show(message, 'error');
 		} finally {
-			if (seq === requestSeq) loading = false;
+			if (seq === requestSeq) {
+				loading = false;
+				stopLoadingDelay?.();
+				stopLoadingDelay = null;
+				showLoading = false;
+			}
 		}
 	}
 
@@ -173,8 +186,8 @@
 	></filter-chip-group>
 
 	<p class="status" aria-live="polite">
-		{#if loading}
-			Loading recipes…
+		{#if showLoading}
+			<LoadingIndicator label="Loading recipes…" />
 		{:else if visibleRecipes.length > 0}
 			{visibleRecipes.length} recipe{visibleRecipes.length === 1 ? '' : 's'}
 		{/if}

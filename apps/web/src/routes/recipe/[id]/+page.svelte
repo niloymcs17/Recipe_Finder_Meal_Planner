@@ -11,6 +11,7 @@
 	import { formatWeekRange, weekDayMeta } from '$lib/utils/dates';
 	import { parseRecipeId } from '$lib/utils/ids';
 	import { ceBind } from '$lib/ui/ce-bind';
+	import LoadingIndicator from '$lib/ui/LoadingIndicator.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -145,7 +146,7 @@
 
 <section class="details">
 	{#if data.userPending}
-		<p class="status">Loading recipe…</p>
+		<LoadingIndicator label="Loading recipe…" />
 	{:else if data.mealdbError}
 		<empty-state icon="inbox" message={data.mealdbError}>
 			<a href="/">Back to discovery</a>
@@ -279,8 +280,9 @@
 		max-width: 40rem;
 	}
 
-	.status {
-		margin: 0;
+	.status-line {
+		margin: 0.65rem 0 0;
+		font-size: 0.9rem;
 		opacity: 0.8;
 	}
 
@@ -347,12 +349,6 @@
 	.btn:disabled {
 		opacity: 0.55;
 		cursor: not-allowed;
-	}
-
-	.status-line {
-		margin: 0.65rem 0 0;
-		font-size: 0.9rem;
-		opacity: 0.8;
 	}
 
 	.field {

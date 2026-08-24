@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 
 	let displayName = $state('');
 	let email = $state('');
 	let password = $state('');
 	let error = $state<string | null>(null);
 	let submitting = $state(false);
+	let errorEl = $state<HTMLParagraphElement | null>(null);
 
 	$effect(() => {
 		authStore.hydrate();
@@ -27,8 +29,10 @@
 		submitting = false;
 		if (!result.ok) {
 			error = result.error;
+			queueMicrotask(() => errorEl?.focus());
 			return;
 		}
+		toastStore.show('Account created in this browser.', 'success');
 		goto('/');
 	}
 </script>
@@ -38,7 +42,7 @@
 	<p>Create an account stored only in this browser.</p>
 
 	{#if error}
-		<p class="error" role="alert">{error}</p>
+		<p class="error" role="alert" tabindex="-1" bind:this={errorEl}>{error}</p>
 	{/if}
 
 	<form onsubmit={handleSubmit}>

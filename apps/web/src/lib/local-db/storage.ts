@@ -5,6 +5,27 @@ function canUseStorage(): boolean {
 	return typeof localStorage !== 'undefined';
 }
 
+function ensureDefaults(): void {
+	if (readJson<StorageMeta | null>(KEYS.meta, null) == null) {
+		writeJson<StorageMeta>(KEYS.meta, { version: STORAGE_VERSION });
+	}
+	if (readJson<Record<string, LocalUser> | null>(KEYS.users, null) == null) {
+		writeJson<Record<string, LocalUser>>(KEYS.users, {});
+	}
+	if (readJson<Session | null | undefined>(KEYS.session, undefined) === undefined) {
+		writeJson<Session | null>(KEYS.session, null);
+	}
+	if (readJson<Recipe[] | null>(KEYS.recipes, null) == null) {
+		writeJson<Recipe[]>(KEYS.recipes, []);
+	}
+	if (readJson<Favorite[] | null>(KEYS.favorites, null) == null) {
+		writeJson<Favorite[]>(KEYS.favorites, []);
+	}
+	if (readJson<MealPlanEntry[] | null>(KEYS.mealPlan, null) == null) {
+		writeJson<MealPlanEntry[]>(KEYS.mealPlan, []);
+	}
+}
+
 export function readJson<T>(key: string, fallback: T): T {
 	if (!canUseStorage()) return fallback;
 	try {
@@ -29,16 +50,16 @@ export function migrate(): void {
 	if (meta?.version === STORAGE_VERSION) return;
 
 	if (!meta) {
+		ensureDefaults();
 		writeJson<StorageMeta>(KEYS.meta, { version: STORAGE_VERSION });
-		writeJson<Record<string, LocalUser>>(KEYS.users, {});
-		writeJson<Session | null>(KEYS.session, null);
-		writeJson<Recipe[]>(KEYS.recipes, []);
-		writeJson<Favorite[]>(KEYS.favorites, []);
-		writeJson<MealPlanEntry[]>(KEYS.mealPlan, []);
 		return;
 	}
 
-	// Future migrations can branch on meta.version.
+	// Upgrade older schema versions without wiping existing data.
+	if (meta.version < STORAGE_VERSION) {
+		ensureDefaults();
+	}
+
 	writeJson<StorageMeta>(KEYS.meta, { version: STORAGE_VERSION });
 }
 

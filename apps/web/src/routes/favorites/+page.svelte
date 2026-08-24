@@ -7,6 +7,8 @@
 	import { favoritesStore } from '$lib/stores/favorites.svelte';
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
+	import LoadingIndicator from '$lib/ui/LoadingIndicator.svelte';
+	import { scheduleDelayedLoading } from '$lib/utils/delayed-loading';
 
 	let rootEl = $state<HTMLElement | null>(null);
 	let cache = $state<Record<string, Recipe | 'missing'>>({});
@@ -33,15 +35,17 @@
 		}
 
 		const seq = ++requestSeq;
-		loading = true;
+		const stopDelayed = scheduleDelayedLoading((value) => {
+			if (seq === requestSeq) loading = value;
+		});
 		void resolveRecipes(pending).then((map) => {
+			stopDelayed();
 			if (seq !== requestSeq) return;
 			const next = { ...cache };
 			for (const id of pending) {
 				next[id] = map.get(id) ?? 'missing';
 			}
 			cache = next;
-			loading = false;
 		});
 	});
 
@@ -89,7 +93,7 @@
 
 	<p class="status" aria-live="polite">
 		{#if loading}
-			Loading favorites…
+			<LoadingIndicator label="Loading favorites…" />
 		{:else if recipes.length > 0}
 			{recipes.length} favorite{recipes.length === 1 ? '' : 's'}
 			{#if unresolved}

@@ -2,11 +2,13 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 
 	let email = $state('');
 	let password = $state('');
 	let error = $state<string | null>(null);
 	let submitting = $state(false);
+	let errorEl = $state<HTMLParagraphElement | null>(null);
 
 	function safeNext(raw: string | null): string {
 		if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('://')) return '/';
@@ -31,8 +33,10 @@
 		submitting = false;
 		if (!result.ok) {
 			error = result.error;
+			queueMicrotask(() => errorEl?.focus());
 			return;
 		}
+		toastStore.show('Signed in.', 'success');
 		goto(nextPath);
 	}
 </script>
@@ -42,7 +46,7 @@
 	<p>Sign in with email and password. Credentials stay in this browser only.</p>
 
 	{#if error}
-		<p class="error" role="alert">{error}</p>
+		<p class="error" role="alert" tabindex="-1" bind:this={errorEl}>{error}</p>
 	{/if}
 
 	<form onsubmit={handleSubmit}>

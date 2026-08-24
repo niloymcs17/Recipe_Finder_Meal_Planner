@@ -32,6 +32,7 @@
 
 	function handleLogout() {
 		authStore.logout();
+		toastStore.show('Signed out. Your data remains in this browser.', 'info');
 		goto('/');
 	}
 </script>
@@ -56,6 +57,11 @@
 		{/if}
 	</nav>
 </header>
+
+<p class="storage-notice" role="note">
+	Accounts, recipes, favorites, and meal plans are stored in <strong>this browser only</strong> — not
+	in a cloud database. Clearing site data or using another browser starts empty.
+</p>
 
 <main>
 	{@render children()}
@@ -88,6 +94,19 @@
 		gap: 1rem;
 		padding: 1rem 1.5rem;
 		border-bottom: 1px solid rgba(26, 26, 26, 0.08);
+	}
+
+	.storage-notice {
+		margin: 0;
+		padding: 0.55rem 1.5rem;
+		font-size: 0.85rem;
+		background: rgba(31, 92, 58, 0.08);
+		border-bottom: 1px solid rgba(31, 92, 58, 0.12);
+		color: #1a1a1a;
+	}
+
+	.storage-notice strong {
+		color: var(--rf-color-primary, #1f5c3a);
 	}
 
 	.brand {
