@@ -3,10 +3,14 @@
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
+	import { ceBind } from '$lib/ui/ce-bind';
 	import { registerRecipeUi } from '$lib/ui/register';
 	import '../app.css';
 
 	let { children } = $props();
+
+	const toast = $derived(toastStore.current);
 
 	$effect(() => {
 		authStore.hydrate();
@@ -32,6 +36,7 @@
 	<a class="brand" href="/">Recipe Finder</a>
 	<nav>
 		{#if authStore.ready && authStore.user}
+			<a href="/recipe/new">New recipe</a>
 			<span class="user-email">{authStore.user.email}</span>
 			<button type="button" onclick={handleLogout}>Log out</button>
 		{:else if authStore.ready}
@@ -44,6 +49,14 @@
 <main>
 	{@render children()}
 </main>
+
+<toast-notification
+	use:ceBind={{
+		message: toast.message,
+		type: toast.type,
+		visible: toast.visible
+	}}
+></toast-notification>
 
 <style>
 	:global(body) {
@@ -106,5 +119,13 @@
 		padding: 1.5rem;
 		max-width: 40rem;
 		margin: 0 auto;
+	}
+
+	:global(toast-notification) {
+		position: fixed;
+		right: 1.25rem;
+		bottom: 1.25rem;
+		z-index: 40;
+		max-width: min(24rem, calc(100vw - 2rem));
 	}
 </style>

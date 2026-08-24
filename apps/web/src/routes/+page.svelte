@@ -6,6 +6,7 @@
 	import { loadMyRecipes } from '$lib/recipes/local';
 	import { filterRecipes, mergeDiscovery } from '$lib/recipes/merge';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
 	import type { PageData } from './$types';
@@ -19,11 +20,6 @@
 	let clientMealdb = $state<Recipe[] | null>(null);
 	let clientError = $state<string | null | undefined>(undefined);
 	let loading = $state(false);
-	let toast = $state<{ visible: boolean; message: string; type: 'info' | 'error' | 'success' }>({
-		visible: false,
-		message: '',
-		type: 'info'
-	});
 
 	let abort: AbortController | null = null;
 	let requestSeq = 0;
@@ -58,7 +54,7 @@
 
 	onMount(() => {
 		clientReady = true;
-		if (data.error) showToast(data.error, 'error');
+		if (data.error) toastStore.show(data.error, 'error');
 
 		const root = rootEl;
 		if (!root) return;
@@ -77,13 +73,6 @@
 			root.removeEventListener('favoriteToggle', onFavoriteToggle);
 		};
 	});
-
-	function showToast(message: string, type: 'info' | 'error' | 'success' = 'info') {
-		toast = { visible: false, message: '', type };
-		queueMicrotask(() => {
-			toast = { visible: true, message, type };
-		});
-	}
 
 	function recipeTags(recipe: Recipe): string[] {
 		const tags = [recipe.category, recipe.area].filter((tag): tag is string => Boolean(tag));
@@ -121,7 +110,7 @@
 					? error.message
 					: 'Recipe catalog is temporarily unavailable. Please try again shortly.';
 			clientError = message;
-			showToast(message, 'error');
+			toastStore.show(message, 'error');
 		} finally {
 			if (seq === requestSeq) loading = false;
 		}
@@ -140,7 +129,7 @@
 		const nowMine = values.includes(MINE_VALUE);
 
 		if (nowMine && !wasMine && !authStore.user) {
-			showToast('Sign in to see recipes saved in this browser.', 'info');
+			toastStore.show('Sign in to see recipes saved in this browser.', 'info');
 		}
 
 		void refreshMealDb();
@@ -154,10 +143,10 @@
 
 	function onFavoriteToggle() {
 		if (!authStore.user) {
-			showToast('Sign in to save favorites.', 'info');
+			toastStore.show('Sign in to save favorites.', 'info');
 			return;
 		}
-		showToast('Favorites arrive in a later update.', 'info');
+		toastStore.show('Favorites arrive in a later update.', 'info');
 	}
 </script>
 
@@ -168,6 +157,9 @@
 			Search TheMealDB and, when you’re signed in, recipes you saved in this browser. Nothing is
 			stored in a cloud database.
 		</p>
+		{#if authStore.user}
+			<p class="create-link"><a href="/recipe/new">Add your own recipe</a></p>
+		{/if}
 	</header>
 
 	<search-bar
@@ -199,7 +191,11 @@
 						? 'No matching recipes in this browser yet.'
 						: 'Sign in to see recipes you have saved in this browser.'
 					: 'No recipes match that search. Try another term or clear filters.'}
-		></empty-state>
+		>
+			{#if mineOnly && authStore.user && !errorMessage}
+				<a href="/recipe/new">Create a recipe</a>
+			{/if}
+		</empty-state>
 	{:else}
 		<recipe-grid columns={3} aria-busy={loading ? 'true' : 'false'}>
 			{#each visibleRecipes as recipe (recipe.id)}
@@ -216,12 +212,6 @@
 			{/each}
 		</recipe-grid>
 	{/if}
-
-	<toast-notification
-		message={toast.message}
-		type={toast.type}
-		visible={toast.visible}
-	></toast-notification>
 </section>
 
 <style>
@@ -247,18 +237,18 @@
 		max-width: 40rem;
 	}
 
+	.create-link {
+		margin-top: 0.75rem;
+	}
+
+	.create-link a {
+		color: var(--rf-color-primary, #1f5c3a);
+	}
+
 	.status {
 		margin: 0;
 		min-height: 1.25rem;
 		font-size: 0.9rem;
 		opacity: 0.75;
-	}
-
-	toast-notification {
-		position: fixed;
-		right: 1.25rem;
-		bottom: 1.25rem;
-		z-index: 40;
-		max-width: min(24rem, calc(100vw - 2rem));
 	}
 </style>

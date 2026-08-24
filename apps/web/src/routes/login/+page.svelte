@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { authStore } from '$lib/stores/auth.svelte';
 
 	let email = $state('');
@@ -7,10 +8,18 @@
 	let error = $state<string | null>(null);
 	let submitting = $state(false);
 
+	function safeNext(raw: string | null): string {
+		if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('://')) return '/';
+		if (raw.startsWith('/login') || raw.startsWith('/signup')) return '/';
+		return raw;
+	}
+
+	const nextPath = $derived(safeNext(page.url.searchParams.get('next')));
+
 	$effect(() => {
 		authStore.hydrate();
 		if (authStore.ready && authStore.user) {
-			goto('/');
+			goto(nextPath);
 		}
 	});
 
@@ -24,7 +33,7 @@
 			error = result.error;
 			return;
 		}
-		goto('/');
+		goto(nextPath);
 	}
 </script>
 

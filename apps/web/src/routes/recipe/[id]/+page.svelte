@@ -1,39 +1,275 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
+	import { onMount } from 'svelte';
+	import { remove } from '$lib/local-db/recipes';
+	import { authStore } from '$lib/stores/auth.svelte';
+	import { toastStore } from '$lib/stores/toast.svelte';
+	import { parseRecipeId } from '$lib/utils/ids';
+	import { ceBind } from '$lib/ui/ce-bind';
+	import type { PageData } from './$types';
 
-	let id = $derived(page.params.id ?? '');
+	let { data }: { data: PageData } = $props();
+
+	let deleteOpen = $state(false);
+	let modalEl = $state<HTMLElement | null>(null);
+
+	const isOwner = $derived(
+		data.recipe?.source === 'user' &&
+			Boolean(authStore.user) &&
+			data.recipe.ownerId === authStore.user?.id
+	);
+
+	const rawId = $derived(parseRecipeId(data.recipe?.id ?? '')?.rawId ?? data.rawId);
+
+	function metaBits(): string[] {
+		if (!data.recipe) return [];
+		const bits: string[] = [];
+		if (data.recipe.category) bits.push(data.recipe.category);
+		if (data.recipe.area) bits.push(data.recipe.area);
+		if (data.recipe.cookTimeMinutes) bits.push(`${data.recipe.cookTimeMinutes} min`);
+		if (data.recipe.servings) bits.push(`${data.recipe.servings} serving${data.recipe.servings === 1 ? '' : 's'}`);
+		return bits;
+	}
+
+	function closeDelete() {
+		deleteOpen = false;
+	}
+
+	function confirmDelete() {
+		deleteOpen = false;
+		if (!isOwner) {
+			toastStore.show('You cannot delete this recipe.', 'error');
+			return;
+		}
+		try {
+			remove(rawId);
+			toastStore.show('Recipe deleted.', 'success');
+			void goto('/');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : 'Could not delete recipe.';
+			if (message === 'Forbidden' || message === 'Not authenticated') {
+				toastStore.show('You cannot delete this recipe.', 'error');
+				return;
+			}
+			toastStore.show(message, 'error');
+		}
+	}
+
+	onMount(() => {
+		const node = modalEl;
+		if (!node) return;
+		node.addEventListener('close', closeDelete);
+		node.addEventListener('confirm', confirmDelete);
+		return () => {
+			node.removeEventListener('close', closeDelete);
+			node.removeEventListener('confirm', confirmDelete);
+		};
+	});
 </script>
 
-<section>
-	<h1>Recipe</h1>
-	<p class="id"><code>{id}</code></p>
-	<p>
-		Full details, create, and edit land in the next phase. This page exists so discovery cards can
-		navigate with source-prefixed ids (<code>mealdb:…</code> / <code>user:…</code>).
-	</p>
-	<p><a href="/">Back to discovery</a></p>
+<svelte:head>
+	<title>{data.recipe?.title ?? 'Recipe'} · Recipe Finder</title>
+</svelte:head>
+
+<section class="details">
+	{#if data.userPending}
+		<p class="status">Loading recipe…</p>
+	{:else if data.mealdbError}
+		<empty-state icon="inbox" message={data.mealdbError}>
+			<a href="/">Back to discovery</a>
+		</empty-state>
+	{:else if !data.recipe}
+		<empty-state
+			icon="search"
+			message={data.source === 'user'
+				? 'This recipe is not in this browser. User recipes stay on the device that created them.'
+				: 'This recipe was not found.'}
+		>
+			<a href="/">Back to discovery</a>
+		</empty-state>
+	{:else}
+		<article>
+			{#if data.recipe.image}
+				<img class="hero" src={data.recipe.image} alt="" />
+			{/if}
+
+			<p class="source">
+				{data.recipe.source === 'user' ? 'Your recipe' : 'TheMealDB'}
+			</p>
+			<h1>{data.recipe.title}</h1>
+
+			{#if data.recipe.rating}
+				<rating-stars
+					use:ceBind={{ value: data.recipe.rating, readonly: true }}
+				></rating-stars>
+			{/if}
+
+			{#if metaBits().length}
+				<p class="meta">{metaBits().join(' · ')}</p>
+			{/if}
+
+			<div class="toolbar">
+				{#if isOwner}
+					<a class="btn" href={`/recipe/${encodeURIComponent(data.recipe.id)}/edit`}>Edit</a>
+					<button type="button" class="btn btn--danger" onclick={() => (deleteOpen = true)}>
+						Delete
+					</button>
+				{/if}
+				<button type="button" class="btn btn--ghost" disabled title="Favorites arrive in a later update">
+					Favorite
+				</button>
+			</div>
+
+			{#if data.recipe.ingredients.length}
+				<h2>Ingredients</h2>
+				<ul>
+					{#each data.recipe.ingredients as item, i (i)}
+						<li>
+							{#if item.quantity}
+								<span class="qty">{item.quantity}</span>
+							{/if}
+							{item.name}
+						</li>
+					{/each}
+				</ul>
+			{/if}
+
+			{#if data.recipe.steps.length}
+				<h2>Steps</h2>
+				<ol>
+					{#each data.recipe.steps as step, i (i)}
+						<li>{step}</li>
+					{/each}
+				</ol>
+			{/if}
+
+			{#if data.recipe.source === 'user'}
+				<p class="hint">
+					Saved in this browser only. Refresh keeps it; clearing site data or another browser will
+					not.
+				</p>
+			{/if}
+
+			<p class="back"><a href="/">Back to discovery</a></p>
+		</article>
+	{/if}
+
+	<rf-modal
+		bind:this={modalEl}
+		heading="Delete this recipe?"
+		confirm-label="Delete"
+		cancel-label="Cancel"
+		use:ceBind={{ open: deleteOpen, confirmLabel: 'Delete', cancelLabel: 'Cancel' }}
+	>
+		This cannot be undone. The recipe is removed from this browser’s local storage.
+	</rf-modal>
 </section>
 
 <style>
+	.details {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 40rem;
+	}
+
+	.status {
+		margin: 0;
+		opacity: 0.8;
+	}
+
+	.hero {
+		width: 100%;
+		max-height: 22rem;
+		object-fit: cover;
+		border-radius: 0.5rem;
+		background: #e8e4dc;
+	}
+
+	.source {
+		margin: 0;
+		font-size: 0.85rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		opacity: 0.7;
+	}
+
 	h1 {
-		margin-top: 0;
+		margin: 0.15rem 0 0;
 		color: var(--rf-color-primary, #1f5c3a);
 	}
 
-	.id {
-		padding: 0.75rem 1rem;
-		background: color-mix(in srgb, var(--rf-color-primary, #1f5c3a) 10%, transparent);
-		border-left: 3px solid var(--rf-color-primary, #1f5c3a);
-		word-break: break-all;
+	h2 {
+		margin: 1.25rem 0 0.5rem;
+		font-size: 1.15rem;
 	}
 
-	code {
-		font-family: ui-monospace, monospace;
-		font-size: 0.9em;
+	.meta {
+		margin: 0.35rem 0 0;
+		opacity: 0.8;
 	}
 
-	a {
+	.toolbar {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		margin-top: 1rem;
+	}
+
+	.btn,
+	.toolbar a {
+		font: inherit;
+		text-decoration: none;
+		cursor: pointer;
+		border: none;
+		padding: 0.45rem 0.9rem;
+		background: var(--rf-color-primary, #1f5c3a);
+		color: #fff;
+	}
+
+	.btn--danger {
+		background: #8b1e1e;
+	}
+
+	.btn--ghost,
+	.btn:disabled {
+		background: transparent;
+		color: #1a1a1a;
+		border: 1px solid rgba(26, 26, 26, 0.2);
+	}
+
+	.btn:disabled {
+		opacity: 0.55;
+		cursor: not-allowed;
+	}
+
+	ul,
+	ol {
+		margin: 0;
+		padding-left: 1.2rem;
+	}
+
+	li + li {
+		margin-top: 0.4rem;
+	}
+
+	.qty {
+		font-weight: 700;
+		margin-right: 0.35rem;
+	}
+
+	.hint {
+		margin: 1.5rem 0 0;
+		font-size: 0.9rem;
+		opacity: 0.8;
+	}
+
+	.back {
+		margin: 1.25rem 0 0;
+	}
+
+	article a,
+	:global(empty-state a) {
 		color: var(--rf-color-primary, #1f5c3a);
 	}
 </style>

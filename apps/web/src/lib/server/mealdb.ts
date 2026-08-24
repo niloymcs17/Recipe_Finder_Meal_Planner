@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { stripHtml } from '$lib/server/sanitize';
 import type { Recipe, RecipeIngredient } from '$lib/types/recipe';
 import { toMealDbId } from '$lib/utils/ids';
 import { categoriesFromQuery, type RecipeQuery } from '$lib/validation/recipes-query';
@@ -56,8 +57,8 @@ export function normalizeIngredients(meal: MealRecord): RecipeIngredient[] {
 		const name = asString(meal[`strIngredient${i}`]).trim();
 		if (!name) continue;
 		ingredients.push({
-			name,
-			quantity: asString(meal[`strMeasure${i}`]).trim()
+			name: stripHtml(name),
+			quantity: stripHtml(asString(meal[`strMeasure${i}`]).trim())
 		});
 	}
 	return ingredients;
@@ -68,10 +69,12 @@ export function normalizeSteps(instructions: string | null | undefined): string[
 	return instructions
 		.split(/\r?\n+/)
 		.map((line) =>
-			line
-				.replace(/^(step\s*\d+\s*[-.:)]?\s*)/i, '')
-				.replace(/^\d+\s*[-.:)]\s*/, '')
-				.trim()
+			stripHtml(
+				line
+					.replace(/^(step\s*\d+\s*[-.:)]?\s*)/i, '')
+					.replace(/^\d+\s*[-.:)]\s*/, '')
+					.trim()
+			)
 		)
 		.filter(Boolean);
 }
@@ -87,14 +90,16 @@ export function normalizeMeal(
 	const category = extras.category ?? (asString(meal.strCategory).trim() || null);
 	const area = asString(meal.strArea).trim() || null;
 	const thumb = asString(meal.strMealThumb).trim();
+	const cleanCategory = category ? stripHtml(category) || null : null;
+	const cleanArea = area ? stripHtml(area) || null : null;
 
 	return {
 		id: toMealDbId(rawId),
 		source: 'mealdb',
-		title,
+		title: stripHtml(title),
 		image: thumb || null,
-		category,
-		area,
+		category: cleanCategory,
+		area: cleanArea,
 		ingredients: normalizeIngredients(meal),
 		steps: normalizeSteps(asString(meal.strInstructions) || null)
 	};

@@ -1,7 +1,8 @@
+import { sanitizeOptional, stripHtml } from '$lib/sanitize';
+import { getCurrentUser } from './auth';
 import { KEYS } from './keys';
 import { createId, migrate, readJson, writeJson } from './storage';
-import { getCurrentUser } from './auth';
-import type { Recipe } from './types';
+import type { Ingredient, Recipe } from './types';
 
 function requireUserId(): string {
 	const user = getCurrentUser();
@@ -16,6 +17,17 @@ function allRecipes(): Recipe[] {
 
 function saveRecipes(recipes: Recipe[]): void {
 	writeJson(KEYS.recipes, recipes);
+}
+
+function sanitizeIngredients(ingredients: Ingredient[]): Ingredient[] {
+	return ingredients.map((row) => ({
+		name: stripHtml(row.name),
+		quantity: stripHtml(row.quantity)
+	}));
+}
+
+function sanitizeSteps(steps: string[]): string[] {
+	return steps.map((step) => stripHtml(step));
 }
 
 export function listMine(): Recipe[] {
@@ -37,14 +49,14 @@ export function create(input: RecipeInput): Recipe {
 	const recipe: Recipe = {
 		id: input.id ?? createId(),
 		ownerId: userId,
-		title: input.title,
-		imageUrl: input.imageUrl ?? null,
-		category: input.category ?? null,
-		area: input.area ?? null,
+		title: stripHtml(input.title),
+		imageUrl: sanitizeOptional(input.imageUrl),
+		category: sanitizeOptional(input.category),
+		area: sanitizeOptional(input.area),
 		cookTimeMinutes: input.cookTimeMinutes ?? null,
 		servings: input.servings ?? null,
-		ingredients: input.ingredients,
-		steps: input.steps,
+		ingredients: sanitizeIngredients(input.ingredients),
+		steps: sanitizeSteps(input.steps),
 		createdAt: now,
 		updatedAt: now
 	};
@@ -61,9 +73,20 @@ export function update(id: string, patch: Partial<RecipeInput>): Recipe {
 	if (index < 0) throw new Error('Recipe not found');
 	if (recipes[index].ownerId !== userId) throw new Error('Forbidden');
 
+	const nextTitle = patch.title !== undefined ? stripHtml(patch.title) : recipes[index].title;
 	const updated: Recipe = {
 		...recipes[index],
 		...patch,
+		title: nextTitle,
+		imageUrl:
+			patch.imageUrl !== undefined ? sanitizeOptional(patch.imageUrl) : recipes[index].imageUrl,
+		category:
+			patch.category !== undefined ? sanitizeOptional(patch.category) : recipes[index].category,
+		area: patch.area !== undefined ? sanitizeOptional(patch.area) : recipes[index].area,
+		ingredients: patch.ingredients
+			? sanitizeIngredients(patch.ingredients)
+			: recipes[index].ingredients,
+		steps: patch.steps ? sanitizeSteps(patch.steps) : recipes[index].steps,
 		id: recipes[index].id,
 		ownerId: recipes[index].ownerId,
 		createdAt: recipes[index].createdAt,

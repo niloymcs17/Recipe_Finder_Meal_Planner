@@ -18,4 +18,5 @@ export type Recipe = {
 	ingredients: RecipeIngredient[];
 	steps: string[];
 	ownerId?: string;
+	rating?: number | null;
 };
