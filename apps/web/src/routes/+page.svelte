@@ -5,7 +5,9 @@
 	import { fetchMealDbRecipes } from '$lib/api/recipes';
 	import { loadMyRecipes } from '$lib/recipes/local';
 	import { filterRecipes, mergeDiscovery } from '$lib/recipes/merge';
+	import { toggleFavoriteFromEvent } from '$lib/favorites/actions';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { favoritesStore } from '$lib/stores/favorites.svelte';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
@@ -141,12 +143,9 @@
 		void goto(`/recipe/${encodeURIComponent(recipeId)}`);
 	}
 
-	function onFavoriteToggle() {
-		if (!authStore.user) {
-			toastStore.show('Sign in to save favorites.', 'info');
-			return;
-		}
-		toastStore.show('Favorites arrive in a later update.', 'info');
+	function onFavoriteToggle(event: Event) {
+		const recipeId = (event as CustomEvent<{ recipeId?: string }>).detail?.recipeId;
+		toggleFavoriteFromEvent(recipeId);
 	}
 </script>
 
@@ -203,10 +202,10 @@
 					recipe-id={recipe.id}
 					heading={recipe.title}
 					image={recipe.image ?? ''}
-					favorited={false}
 					use:ceBind={{
 						tags: recipeTags(recipe),
-						cookTime: recipe.cookTimeMinutes ?? 0
+						cookTime: recipe.cookTimeMinutes ?? 0,
+						favorited: favoritesStore.isFavorited(recipe.id)
 					}}
 				></recipe-card>
 			{/each}

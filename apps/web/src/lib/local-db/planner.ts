@@ -2,6 +2,8 @@ import { KEYS } from './keys';
 import { createId, migrate, readJson, writeJson } from './storage';
 import { getCurrentUser } from './auth';
 import type { MealPlanEntry, MealType, RecipeSource, WeekDay } from './types';
+import { assignMealSchema } from '$lib/validation/planner';
+import { parseIsoDate, startOfWeek } from '$lib/utils/dates';
 
 function requireUserId(): string {
 	const user = getCurrentUser();
@@ -20,7 +22,8 @@ function saveEntries(entries: MealPlanEntry[]): void {
 
 export function listByWeek(weekStart: string): MealPlanEntry[] {
 	const userId = requireUserId();
-	return allEntries().filter((e) => e.userId === userId && e.weekStart === weekStart);
+	const canonical = startOfWeek(parseIsoDate(weekStart));
+	return allEntries().filter((e) => e.userId === userId && e.weekStart === canonical);
 }
 
 export function assign(input: {
@@ -31,14 +34,20 @@ export function assign(input: {
 	mealType?: MealType | null;
 }): MealPlanEntry {
 	const userId = requireUserId();
+	const parsed = assignMealSchema.safeParse(input);
+	if (!parsed.success) {
+		throw new Error(parsed.error.issues[0]?.message ?? 'Invalid meal plan entry');
+	}
+
+	const weekStart = startOfWeek(parseIsoDate(parsed.data.weekStart));
 	const entry: MealPlanEntry = {
 		id: createId(),
 		userId,
-		weekStart: input.weekStart,
-		day: input.day,
-		mealType: input.mealType ?? null,
-		recipeId: input.recipeId,
-		source: input.source,
+		weekStart,
+		day: parsed.data.day,
+		mealType: parsed.data.mealType ?? null,
+		recipeId: parsed.data.recipeId,
+		source: parsed.data.source,
 		createdAt: new Date().toISOString()
 	};
 	const entries = allEntries();

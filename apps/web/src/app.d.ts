@@ -75,7 +75,14 @@ declare module 'svelte/elements' {
 			type?: string;
 			visible?: boolean;
 		};
-		'day-column': import('svelte/elements').HTMLAttributes<HTMLElement>;
+		'day-column': import('svelte/elements').HTMLAttributes<HTMLElement> & {
+			day?: string;
+			label?: string;
+			meals?: { id: string; title: string; recipeId?: string }[];
+			'pending-recipe-id'?: string;
+			onmealdrop?: (event: Event) => void;
+			onmealremove?: (event: Event) => void;
+		};
 	}
 }
 

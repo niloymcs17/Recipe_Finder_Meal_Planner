@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authStore } from '$lib/stores/auth.svelte';
+	import { favoritesStore } from '$lib/stores/favorites.svelte';
+	import { plannerStore } from '$lib/stores/planner.svelte';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import { ceBind } from '$lib/ui/ce-bind';
 	import { registerRecipeUi } from '$lib/ui/register';
@@ -14,6 +16,13 @@
 
 	$effect(() => {
 		authStore.hydrate();
+	});
+
+	$effect(() => {
+		if (!authStore.ready) return;
+		void authStore.user;
+		favoritesStore.hydrate();
+		plannerStore.hydrate();
 	});
 
 	// Register Stencil CEs once for every route (browser-only; SSR-safe).
@@ -36,6 +45,8 @@
 	<a class="brand" href="/">Recipe Finder</a>
 	<nav>
 		{#if authStore.ready && authStore.user}
+			<a href="/favorites">Favorites</a>
+			<a href="/planner">Planner</a>
 			<a href="/recipe/new">New recipe</a>
 			<span class="user-email">{authStore.user.email}</span>
 			<button type="button" onclick={handleLogout}>Log out</button>
