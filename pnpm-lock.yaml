@@ -11,8 +11,8 @@ importers:
   apps/web:
     dependencies:
       '@recipe-finder/ui':
-        specifier: workspace:*
-        version: link:../../packages/recipe-ui
+        specifier: 1.0.1
+        version: 1.0.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -86,6 +86,9 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@recipe-finder/ui@1.0.1':
+    resolution: {integrity: sha512-gmpVmgLmfYxNX29F5zrBjrdndG6soz3jaICC0OBeAxwqZynauYqiyJMME4/mnwpIJUVCgec28kM2HjH9x6Z2oA==}
 
   '@rolldown/binding-android-arm64@1.2.4':
     resolution: {integrity: sha512-jHC2cnyKz5xU2fhECtFl8OZ83cYNt13GZQD+0uMJ/X3o+ijmd56okHhTUwxVSHPx1IRVIJEZ1/1pPzeLCU6XKA==}
@@ -821,6 +824,8 @@ snapshots:
   '@oxc-project/types@0.144.0': {}
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@recipe-finder/ui@1.0.1': {}
 
   '@rolldown/binding-android-arm64@1.2.4':
     optional: true
