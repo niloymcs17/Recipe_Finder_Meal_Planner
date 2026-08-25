@@ -19,7 +19,6 @@
 	const nextPath = $derived(safeNext(page.url.searchParams.get('next')));
 
 	$effect(() => {
-		authStore.hydrate();
 		if (authStore.ready && authStore.user) {
 			goto(nextPath);
 		}

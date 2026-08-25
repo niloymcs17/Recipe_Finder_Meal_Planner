@@ -11,7 +11,6 @@
 	let errorEl = $state<HTMLParagraphElement | null>(null);
 
 	$effect(() => {
-		authStore.hydrate();
 		if (authStore.ready && authStore.user) {
 			goto('/');
 		}

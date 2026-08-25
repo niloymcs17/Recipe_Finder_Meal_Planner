@@ -22,9 +22,9 @@
 
 ## Events
 
-| Event         | Description | Type                              |
-| ------------- | ----------- | --------------------------------- |
-| `valueChange` |             | `CustomEvent<{ value: string; }>` |
+| Event         | Description | Type                                            |
+| ------------- | ----------- | ----------------------------------------------- |
+| `valueChange` |             | `CustomEvent<{ value: string; name: string; }>` |
 
 
 ## Shadow Parts

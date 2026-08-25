@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import favicon from '$lib/assets/favicon.svg';
 	import { authStore } from '$lib/stores/auth.svelte';
 	import { favoritesStore } from '$lib/stores/favorites.svelte';
@@ -13,6 +14,7 @@
 	let { children } = $props();
 
 	const toast = $derived(toastStore.current);
+	const wideMain = $derived(page.route.id?.startsWith('/planner') ?? false);
 
 	$effect(() => {
 		authStore.hydrate();
@@ -63,7 +65,7 @@
 	in a cloud database. Clearing site data or using another browser starts empty.
 </p>
 
-<main>
+<main class:wide={wideMain}>
 	{@render children()}
 </main>
 
@@ -149,6 +151,10 @@
 		padding: 1.5rem;
 		max-width: 40rem;
 		margin: 0 auto;
+	}
+
+	main.wide {
+		max-width: min(96rem, calc(100vw - 3rem));
 	}
 
 	:global(toast-notification) {

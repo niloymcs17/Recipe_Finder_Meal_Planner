@@ -337,7 +337,7 @@ declare global {
         new (): HTMLFilterChipGroupElement;
     };
     interface HTMLFormInputElementEventMap {
-        "valueChange": { value: string };
+        "valueChange": { value: string; name: string };
     }
     interface HTMLFormInputElement extends Components.FormInput, HTMLStencilElement {
         addEventListener<K extends keyof HTMLFormInputElementEventMap>(type: K, listener: (this: HTMLFormInputElement, ev: FormInputCustomEvent<HTMLFormInputElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -565,7 +565,7 @@ declare namespace LocalJSX {
           * @default ''
          */
         "name"?: string;
-        "onValueChange"?: (event: FormInputCustomEvent<{ value: string }>) => void;
+        "onValueChange"?: (event: FormInputCustomEvent<{ value: string; name: string }>) => void;
         /**
           * @default ''
          */

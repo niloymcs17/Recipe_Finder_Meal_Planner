@@ -407,10 +407,6 @@
 </section>
 
 <style>
-	:global(main) {
-		max-width: 90rem;
-	}
-
 	.planner {
 		display: flex;
 		flex-direction: column;
@@ -491,8 +487,26 @@
 
 	.week {
 		display: grid;
-		grid-template-columns: repeat(7, minmax(0, 1fr));
-		gap: 0.75rem;
+		grid-template-columns: repeat(7, minmax(11.5rem, 1fr));
+		gap: 1rem;
+		align-items: stretch;
+	}
+
+	.week :global(day-column) {
+		min-width: 0;
+	}
+
+	.week :global(day-column)::part(root) {
+		min-height: 14rem;
+	}
+
+	.week :global(day-column)::part(meal) {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.week :global(day-column)::part(remove) {
+		align-self: flex-start;
 	}
 
 	.modal-copy {
@@ -530,9 +544,19 @@
 		color: var(--rf-color-primary, #1f5c3a);
 	}
 
-	@media (max-width: 70rem) {
+	@media (max-width: 56rem) {
 		.week {
-			grid-template-columns: 1fr;
+			display: flex;
+			gap: 1rem;
+			overflow-x: auto;
+			padding-bottom: 0.35rem;
+			scroll-snap-type: x proximity;
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.week :global(day-column) {
+			flex: 0 0 min(14rem, 78vw);
+			scroll-snap-align: start;
 		}
 	}
 </style>

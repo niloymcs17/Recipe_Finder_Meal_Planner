@@ -128,5 +128,5 @@ pnpm --filter @recipe-finder/web preview
 
 ### UI package publish
 
-Day-to-day development uses `"@recipe-finder/ui": "workspace:*"`. To publish to npm for external consumers, follow [packages/recipe-ui/readme.md](./packages/recipe-ui/readme.md). Graders running the monorepo should use `workspace:*` and `pnpm build` from the root.
+Day-to-day development uses `"@recipe-finder/ui": "workspace:*"`. To publish to npm for external consumers, follow [docs/publish-ui-package.md](./docs/publish-ui-package.md). Graders running the monorepo should use `workspace:*` and `pnpm build` from the root.
 

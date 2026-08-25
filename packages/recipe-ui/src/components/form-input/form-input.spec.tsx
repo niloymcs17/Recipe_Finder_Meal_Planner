@@ -40,6 +40,6 @@ describe('form-input', () => {
     await waitForChanges();
 
     expect(changeSpy).toHaveReceivedEventTimes(1);
-    expect(changeSpy).toHaveReceivedEventDetail({ value: 'Pasta' });
+    expect(changeSpy).toHaveReceivedEventDetail({ value: 'Pasta', name: '' });
   });
 });

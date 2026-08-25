@@ -28,14 +28,14 @@ export class FormInput {
   /** Accessible autocomplete hint when relevant. */
   @Prop() autocomplete = '';
 
-  @Event() valueChange!: EventEmitter<{ value: string }>;
+  @Event({ bubbles: true, composed: true }) valueChange!: EventEmitter<{ value: string; name: string }>;
 
   private inputId = `rf-input-${Math.random().toString(36).slice(2, 9)}`;
   private errorId = `rf-input-err-${Math.random().toString(36).slice(2, 9)}`;
 
   private onInput = (event: Event) => {
     const next = (event.target as HTMLInputElement).value;
-    this.valueChange.emit({ value: next });
+    this.valueChange.emit({ value: next, name: this.name ?? '' });
   };
 
   render() {

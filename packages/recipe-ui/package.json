@@ -1,6 +1,6 @@
 {
   "name": "@recipe-finder/ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Stencil UI library for Recipe Finder & Meal Planner",
   "publishConfig": {
     "access": "public"

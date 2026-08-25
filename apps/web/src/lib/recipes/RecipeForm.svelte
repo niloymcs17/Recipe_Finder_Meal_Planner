@@ -38,8 +38,10 @@
 	}
 
 	function onValueChange(event: Event) {
-		const name = (event.target as HTMLElement | null)?.getAttribute?.('name');
-		const value = (event as CustomEvent<{ value: string }>).detail?.value ?? '';
+		const target = event.target as (HTMLElement & { name?: string }) | null;
+		const detail = (event as CustomEvent<{ value: string; name?: string }>).detail;
+		const name = detail?.name || target?.name || target?.getAttribute?.('name') || '';
+		const value = detail?.value ?? '';
 		if (!name) return;
 
 		const ingName = /^ing-name-(\d+)$/.exec(name);
