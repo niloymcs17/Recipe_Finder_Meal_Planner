@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { fetchMealDbRecipes } from '$lib/api/recipes';
 	import { toggleFavoriteFromEvent } from '$lib/favorites/actions';
 	import { loadMyRecipes } from '$lib/recipes/local';
+	import { filterRecipes, mergeDiscovery } from '$lib/recipes/merge';
 	import { resolveRecipes } from '$lib/recipes/resolve';
 	import { aggregateIngredients } from '$lib/planner/shopping';
 	import { authStore } from '$lib/stores/auth.svelte';
@@ -13,19 +15,30 @@
 	import type { Recipe } from '$lib/types/recipe';
 	import { ceBind } from '$lib/ui/ce-bind';
 	import LoadingIndicator from '$lib/ui/LoadingIndicator.svelte';
-	import { addWeeks, formatWeekRange, startOfWeek, weekDayMeta } from '$lib/utils/dates';
+	import { addWeeks, formatWeekRange, startOfWeek, weekDayMeta, WEEK_DAY_SHORT } from '$lib/utils/dates';
 	import { scheduleDelayedLoading } from '$lib/utils/delayed-loading';
 	import { parseRecipeId } from '$lib/utils/ids';
+	import type { PageData } from './$types';
 
 	const RECIPE_DRAG_MIME = 'application/x-recipe-id';
-	const MEAL_TYPES: { value: MealType | ''; label: string }[] = [
-		{ value: '', label: 'Any meal' },
+	const MINE_VALUE = '__mine__';
+
+	const MEAL_COLUMNS: { value: MealType; label: string }[] = [
 		{ value: 'breakfast', label: 'Breakfast' },
 		{ value: 'lunch', label: 'Lunch' },
 		{ value: 'dinner', label: 'Dinner' }
 	];
 
-	type DayMeal = { id: string; title: string; recipeId?: string };
+	const TABS = [
+		{ id: 'plan', label: 'Weekly plan', icon: '📅' },
+		{ id: 'favorites', label: 'Favourite recipe', icon: '❤️' },
+		{ id: 'browse', label: 'Browse recipe', icon: '🔍' }
+	] as const;
+
+	type PlannerTab = (typeof TABS)[number]['id'];
+	type TargetCell = { day: WeekDay; mealType: MealType };
+
+	let { data }: { data: PageData } = $props();
 
 	let rootEl = $state<HTMLElement | null>(null);
 	let shoppingModal = $state<HTMLElement | null>(null);
@@ -36,11 +49,24 @@
 	let assignOpen = $state(false);
 	let assignDay = $state<WeekDay>('monday');
 	let assignMealType = $state<MealType | ''>('');
+	let activeTab = $state<PlannerTab>('plan');
+	let targetCell = $state<TargetCell | null>(null);
+	let dragOverCell = $state<string | null>(null);
 	let requestSeq = 0;
 	let resolving = $state(false);
+	let browseQuery = $state('');
+	let browseFilters = $state<string[]>([]);
+	let clientMealdb = $state<Recipe[] | null>(null);
+	let browseLoading = $state(false);
+	let browseShowLoading = $state(false);
+	let browseAbort: AbortController | null = null;
+	let browseRequestSeq = 0;
+	let browseStopLoading: (() => void) | null = null;
 
 	const days = $derived(weekDayMeta(plannerStore.weekStart));
 	const weekLabel = $derived(formatWeekRange(plannerStore.weekStart));
+	const currentWeekStart = $derived(startOfWeek(new Date()));
+	const canGoPreviousWeek = $derived(plannerStore.weekStart > currentWeekStart);
 
 	const myRecipes = $derived.by(() => {
 		void authStore.user;
@@ -48,21 +74,26 @@
 		return loadMyRecipes();
 	});
 
-	const trayRecipes = $derived.by(() => {
-		const seen = new Set<string>();
-		const list: Recipe[] = [];
-		for (const recipe of myRecipes) {
-			if (seen.has(recipe.id)) continue;
-			seen.add(recipe.id);
-			list.push(recipe);
-		}
-		for (const item of favoritesStore.items) {
-			const recipe = cache[item.recipeId];
-			if (!recipe || recipe === 'missing' || seen.has(recipe.id)) continue;
-			seen.add(recipe.id);
-			list.push(recipe);
-		}
-		return list;
+	const favoriteRecipes = $derived(
+		favoritesStore.items
+			.map((item) => cache[item.recipeId])
+			.filter((recipe): recipe is Recipe => Boolean(recipe) && recipe !== 'missing')
+	);
+
+	const browseMineOnly = $derived(browseFilters.includes(MINE_VALUE));
+	const browseCategories = $derived(browseFilters.filter((value) => value !== MINE_VALUE));
+	const browseFilterOptions = $derived([
+		{ label: 'My recipes', value: MINE_VALUE },
+		...data.categories.map((name) => ({ label: name, value: name }))
+	]);
+
+	const browseVisibleRecipes = $derived.by(() => {
+		const mine = filterRecipes(myRecipes, {
+			q: browseQuery,
+			categories: browseCategories
+		});
+		if (browseMineOnly) return mine;
+		return mergeDiscovery(clientMealdb ?? [], mine);
 	});
 
 	const neededIds = $derived.by(() => {
@@ -118,6 +149,21 @@
 		});
 	});
 
+	function cellKey(day: WeekDay, mealType: MealType): string {
+		return `${day}-${mealType}`;
+	}
+
+	function entryFor(day: WeekDay, mealType: MealType): MealPlanEntry | undefined {
+		const exact = plannerStore.entries.find(
+			(entry) => entry.day === day && entry.mealType === mealType
+		);
+		if (exact) return exact;
+		if (mealType === 'lunch') {
+			return plannerStore.entries.find((entry) => entry.day === day && !entry.mealType);
+		}
+		return undefined;
+	}
+
 	function recipeTitle(recipeId: string): string {
 		const recipe = cache[recipeId];
 		if (recipe && recipe !== 'missing') return recipe.title;
@@ -125,21 +171,10 @@
 		return 'Loading…';
 	}
 
-	function mealTitle(entry: MealPlanEntry): string {
-		const title = recipeTitle(entry.recipeId);
-		if (!entry.mealType) return title;
-		const meal = entry.mealType[0].toUpperCase() + entry.mealType.slice(1);
-		return `${meal} · ${title}`;
-	}
-
-	function mealsFor(day: WeekDay): DayMeal[] {
-		return plannerStore.entries
-			.filter((entry) => entry.day === day)
-			.map((entry) => ({
-				id: entry.id,
-				title: mealTitle(entry),
-				recipeId: entry.recipeId
-			}));
+	function recipeImage(recipeId: string): string {
+		const recipe = cache[recipeId];
+		if (recipe && recipe !== 'missing' && recipe.image) return recipe.image;
+		return '';
 	}
 
 	function recipeTags(recipe: Recipe): string[] {
@@ -148,12 +183,87 @@
 		return tags;
 	}
 
-	function goWeek(delta: number) {
-		plannerStore.setWeek(addWeeks(plannerStore.weekStart, delta));
+	function goPreviousWeek() {
+		if (!canGoPreviousWeek) return;
+		plannerStore.setWeek(addWeeks(plannerStore.weekStart, -1));
 	}
 
-	function goThisWeek() {
-		plannerStore.setWeek(startOfWeek(new Date()));
+	function goNextWeek() {
+		plannerStore.setWeek(addWeeks(plannerStore.weekStart, 1));
+	}
+
+	$effect(() => {
+		if (plannerStore.weekStart < currentWeekStart) {
+			plannerStore.setWeek(currentWeekStart);
+		}
+	});
+
+	function onEmptyCellClick(day: WeekDay, mealType: MealType) {
+		targetCell = { day, mealType };
+		activeTab = 'browse';
+		toastStore.show('Choose a recipe to add to this slot.', 'info');
+	}
+
+	async function refreshBrowseRecipes() {
+		browseAbort?.abort();
+		if (!browser || browseMineOnly) {
+			browseLoading = false;
+			return;
+		}
+		const controller = new AbortController();
+		browseAbort = controller;
+		const seq = ++browseRequestSeq;
+		browseLoading = true;
+		browseStopLoading?.();
+		browseStopLoading = scheduleDelayedLoading((value) => {
+			if (seq === browseRequestSeq) browseShowLoading = value;
+		});
+
+		try {
+			const recipes = await fetchMealDbRecipes(
+				{
+					q: browseQuery || undefined,
+					category: browseCategories.length ? browseCategories.join(',') : undefined
+				},
+				controller.signal
+			);
+			if (seq !== browseRequestSeq) return;
+			clientMealdb = recipes;
+		} catch (error) {
+			if (controller.signal.aborted || seq !== browseRequestSeq) return;
+			if (error instanceof DOMException && error.name === 'AbortError') return;
+			const message =
+				error instanceof Error
+					? error.message
+					: 'Recipe catalog is temporarily unavailable. Please try again shortly.';
+			toastStore.show(message, 'error');
+		} finally {
+			if (seq === browseRequestSeq) {
+				browseLoading = false;
+				browseStopLoading?.();
+				browseStopLoading = null;
+				browseShowLoading = false;
+			}
+		}
+	}
+
+	function onBrowseSearch(event: Event) {
+		const value = (event as CustomEvent<{ value: string }>).detail?.value ?? '';
+		browseQuery = value;
+		void refreshBrowseRecipes();
+	}
+
+	function onBrowseFilterChange(event: Event) {
+		const values = (event as CustomEvent<{ values: string[] }>).detail?.values ?? [];
+		const wasMine = browseFilters.includes(MINE_VALUE);
+		browseFilters = values;
+		const nowMine = values.includes(MINE_VALUE);
+
+		if (nowMine && !wasMine && !authStore.user) {
+			toastStore.show('Sign in to see recipes saved in this browser.', 'info');
+		}
+
+		void refreshBrowseRecipes();
 	}
 
 	function onDragStart(event: DragEvent, recipeId: string) {
@@ -165,10 +275,34 @@
 		pendingRecipeId = recipeId;
 	}
 
-	function openAssign(recipeId: string, day: WeekDay) {
+	function onCellDragOver(event: DragEvent, day: WeekDay, mealType: MealType) {
+		event.preventDefault();
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = 'copy';
+		}
+		dragOverCell = cellKey(day, mealType);
+	}
+
+	function onCellDragLeave(day: WeekDay, mealType: MealType) {
+		if (dragOverCell === cellKey(day, mealType)) {
+			dragOverCell = null;
+		}
+	}
+
+	function onCellDrop(event: DragEvent, day: WeekDay, mealType: MealType) {
+		event.preventDefault();
+		dragOverCell = null;
+		const dt = event.dataTransfer;
+		if (!dt) return;
+		const recipeId = dt.getData(RECIPE_DRAG_MIME) || dt.getData('text/plain');
+		if (!recipeId) return;
+		assignRecipe(recipeId, day, mealType);
+	}
+
+	function openAssign(recipeId: string, day: WeekDay, mealType?: MealType | null) {
 		pendingRecipeId = recipeId;
 		assignDay = day;
-		assignMealType = '';
+		assignMealType = mealType ?? '';
 		assignOpen = true;
 	}
 
@@ -186,6 +320,8 @@
 				mealType: mealType ?? null
 			});
 			toastStore.show('Added to this week’s plan.', 'success');
+			targetCell = null;
+			activeTab = 'plan';
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Could not update the meal plan.';
 			if (message === 'Not authenticated') {
@@ -196,15 +332,7 @@
 		}
 	}
 
-	function onMealDrop(event: Event) {
-		const detail = (event as CustomEvent<{ recipeId: string; day: string }>).detail;
-		if (!detail?.recipeId || !detail.day) return;
-		openAssign(detail.recipeId, detail.day as WeekDay);
-	}
-
-	function onMealRemove(event: Event) {
-		const entryId = (event as CustomEvent<{ entryId: string }>).detail?.entryId;
-		if (!entryId) return;
+	function removeEntry(entryId: string) {
 		try {
 			plannerStore.remove(entryId);
 			toastStore.show('Removed from the plan.', 'success');
@@ -231,6 +359,12 @@
 	function onRecipeSelect(event: Event) {
 		const recipeId = (event as CustomEvent<{ recipeId?: string }>).detail?.recipeId;
 		if (!recipeId) return;
+
+		if (targetCell) {
+			assignRecipe(recipeId, targetCell.day, targetCell.mealType);
+			return;
+		}
+
 		pendingRecipeId = pendingRecipeId === recipeId ? '' : recipeId;
 	}
 
@@ -240,116 +374,258 @@
 	}
 
 	onMount(() => {
+		if (data.browseError) toastStore.show(data.browseError, 'error');
+		void refreshBrowseRecipes();
+
 		const root = rootEl;
 		const assign = assignModal;
 		const shopping = shoppingModal;
 		if (!root) return;
 
-		root.addEventListener('mealDrop', onMealDrop);
-		root.addEventListener('mealRemove', onMealRemove);
 		root.addEventListener('recipeSelect', onRecipeSelect);
 		root.addEventListener('favoriteToggle', onFavoriteToggle);
+		root.addEventListener('searchChange', onBrowseSearch);
+		root.addEventListener('searchSubmit', onBrowseSearch);
+		root.addEventListener('filterChange', onBrowseFilterChange);
 		assign?.addEventListener('close', closeAssign);
 		assign?.addEventListener('confirm', confirmAssign);
 		shopping?.addEventListener('close', closeShopping);
 		shopping?.addEventListener('confirm', closeShopping);
 
 		return () => {
-			root.removeEventListener('mealDrop', onMealDrop);
-			root.removeEventListener('mealRemove', onMealRemove);
 			root.removeEventListener('recipeSelect', onRecipeSelect);
 			root.removeEventListener('favoriteToggle', onFavoriteToggle);
+			root.removeEventListener('searchChange', onBrowseSearch);
+			root.removeEventListener('searchSubmit', onBrowseSearch);
+			root.removeEventListener('filterChange', onBrowseFilterChange);
 			assign?.removeEventListener('close', closeAssign);
 			assign?.removeEventListener('confirm', confirmAssign);
 			shopping?.removeEventListener('close', closeShopping);
 			shopping?.removeEventListener('confirm', closeShopping);
+			browseAbort?.abort();
 		};
 	});
 </script>
 
 <svelte:head>
-	<title>Meal planner · Recipe Finder</title>
+	<title>Meal Planning · Recipe Finder</title>
 </svelte:head>
 
 <section class="planner" bind:this={rootEl}>
-	<header class="hero">
-		<h1>Meal planner</h1>
-		<p>
-			Plan meals for the week starting Monday. Entries stay in this browser for your account —
-			refresh keeps them; another browser will not see them.
-		</p>
-	</header>
+	<div class="planner-card">
+		<header class="planner-header">
+			<h1>Meal Planning</h1>
+			<div class="header-actions">
+				<button type="button" class="ghost-btn" onclick={() => (shoppingOpen = true)}>
+					Shopping list
+				</button>
+			</div>
+		</header>
 
-	<div class="week-nav">
-		<button type="button" onclick={() => goWeek(-1)}>Previous week</button>
-		<div class="week-label">
-			<strong>{weekLabel}</strong>
-			<button type="button" class="linkish" onclick={goThisWeek}>This week</button>
+		<div class="week-controls">
+			<button
+				type="button"
+				class="week-btn"
+				onclick={goPreviousWeek}
+				disabled={!canGoPreviousWeek}
+				aria-label="Previous week"
+			>
+				‹
+			</button>
+			<span class="week-label">{weekLabel}</span>
+			<button type="button" class="week-btn" onclick={goNextWeek} aria-label="Next week">›</button>
 		</div>
-		<button type="button" onclick={() => goWeek(1)}>Next week</button>
-		<button type="button" class="secondary" onclick={() => (shoppingOpen = true)}>
-			Shopping list
-		</button>
-	</div>
 
-	{#if resolving}
-		<LoadingIndicator label="Loading week…" />
-	{/if}
+		<nav class="planner-tabs" aria-label="Planner views">
+			{#each TABS as tab (tab.id)}
+				<button
+					type="button"
+					class:active={activeTab === tab.id}
+					onclick={() => (activeTab = tab.id)}
+				>
+					<span class="tab-icon" aria-hidden="true">{tab.icon}</span>
+					{tab.label}
+				</button>
+			{/each}
+		</nav>
 
-	<section class="tray">
-		<h2>Assign a recipe</h2>
-		<p class="hint">
-			Drag a card onto a day, or tap a card and then <strong>Assign here</strong>. Optional meal
-			type is asked before saving.
-		</p>
-		{#if trayRecipes.length === 0}
-			<empty-state
-				icon="search"
-				message="Favorite a recipe or create your own, then assign it to a day."
-			>
-				<a href="/">Browse recipes</a>
-			</empty-state>
-		{:else}
-			<recipe-grid columns={4}>
-				{#each trayRecipes as recipe (recipe.id)}
-					<div
-						class="tray-item"
-						class:selected={pendingRecipeId === recipe.id}
-						role="group"
-						aria-label="Drag {recipe.title} onto a day"
-						draggable="true"
-						ondragstart={(event) => onDragStart(event, recipe.id)}
-					>
-						<recipe-card
-							recipe-id={recipe.id}
-							heading={recipe.title}
-							image={recipe.image ?? ''}
-							use:ceBind={{
-								tags: recipeTags(recipe),
-								cookTime: recipe.cookTimeMinutes ?? 0,
-								favorited: favoritesStore.isFavorited(recipe.id)
-							}}
-						></recipe-card>
-					</div>
-				{/each}
-			</recipe-grid>
+		{#if resolving}
+			<LoadingIndicator label="Loading week…" />
 		{/if}
-	</section>
 
-	<div class="week">
-		{#each days as day (`${authStore.user?.id ?? 'anon'}-${plannerStore.weekStart}-${day.day}`)}
-			<day-column
-				day={day.day}
-				label={day.label}
-				use:ceBind={{
-					label: day.label,
-					meals: mealsFor(day.day),
-					pendingRecipeId
-				}}
-			>
-				<empty-state icon="inbox" message="No meals yet. Drop or assign a recipe."></empty-state>
-			</day-column>
-		{/each}
+		{#if activeTab === 'plan'}
+			<div class="meal-grid" aria-label="Weekly meal plan">
+				<div class="grid-corner" aria-hidden="true"></div>
+				{#each MEAL_COLUMNS as column (column.value)}
+					<div class="meal-col-header">{column.label}</div>
+				{/each}
+
+				{#each days as day (`${authStore.user?.id ?? 'anon'}-${plannerStore.weekStart}-${day.day}`)}
+					<div class="day-label">{WEEK_DAY_SHORT[day.day]}</div>
+					{#each MEAL_COLUMNS as column (column.value)}
+						{@const entry = entryFor(day.day, column.value)}
+						{@const key = cellKey(day.day, column.value)}
+						<div
+							class="meal-cell"
+							class:meal-cell--over={dragOverCell === key}
+							class:meal-cell--target={targetCell?.day === day.day &&
+								targetCell?.mealType === column.value}
+							role="group"
+							ondragover={(event) => onCellDragOver(event, day.day, column.value)}
+							ondragleave={() => onCellDragLeave(day.day, column.value)}
+							ondrop={(event) => onCellDrop(event, day.day, column.value)}
+						>
+							{#if entry}
+								<article
+									class="meal-card filled"
+									style={recipeImage(entry.recipeId)
+										? `background-image: url("${recipeImage(entry.recipeId)}")`
+										: undefined}
+								>
+									<div class="meal-card__shade"></div>
+									<p class="meal-card__title">{recipeTitle(entry.recipeId)}</p>
+									<button
+										type="button"
+										class="meal-card__remove"
+										aria-label={`Remove ${recipeTitle(entry.recipeId)}`}
+										onclick={() => removeEntry(entry.id)}
+									>
+										✕
+									</button>
+								</article>
+							{:else}
+								<button
+									type="button"
+									class="meal-card empty"
+									aria-label={`Add ${column.label} for ${WEEK_DAY_SHORT[day.day]}`}
+									onclick={() => onEmptyCellClick(day.day, column.value)}
+								>
+									<span aria-hidden="true">+</span>
+								</button>
+							{/if}
+						</div>
+					{/each}
+				{/each}
+			</div>
+		{:else if activeTab === 'favorites'}
+			<section class="recipe-panel">
+				{#if targetCell}
+					<p class="recipe-panel__hint">
+						Adding to <strong>{WEEK_DAY_SHORT[targetCell.day]}</strong>
+						{targetCell.mealType}. Pick a favourite below, or drag one onto the grid.
+					</p>
+				{:else}
+					<p class="recipe-panel__hint">
+						Your saved favourites — click a card or drag it onto a weekly plan slot.
+					</p>
+				{/if}
+
+				{#if favoriteRecipes.length === 0}
+					<empty-state icon="inbox" message="No favourite recipes yet. Browse recipes and tap the heart to save them.">
+						<button type="button" class="link-btn" onclick={() => (activeTab = 'browse')}>
+							Browse recipes
+						</button>
+					</empty-state>
+				{:else}
+					<recipe-grid columns={4}>
+						{#each favoriteRecipes as recipe (recipe.id)}
+							<div
+								class="tray-item"
+								class:selected={pendingRecipeId === recipe.id}
+								role="group"
+								aria-label="Drag {recipe.title} onto a day"
+								draggable="true"
+								ondragstart={(event) => onDragStart(event, recipe.id)}
+							>
+								<recipe-card
+									recipe-id={recipe.id}
+									heading={recipe.title}
+									image={recipe.image ?? ''}
+									use:ceBind={{
+										tags: recipeTags(recipe),
+										cookTime: recipe.cookTimeMinutes ?? 0,
+										favorited: favoritesStore.isFavorited(recipe.id)
+									}}
+								></recipe-card>
+							</div>
+						{/each}
+					</recipe-grid>
+				{/if}
+			</section>
+		{:else}
+			<section class="recipe-panel">
+				{#if targetCell}
+					<p class="recipe-panel__hint">
+						Adding to <strong>{WEEK_DAY_SHORT[targetCell.day]}</strong>
+						{targetCell.mealType}. Pick a recipe below, or drag one onto the grid.
+					</p>
+				{:else}
+					<p class="recipe-panel__hint">
+						Search and filter recipes, then click a card or drag it onto the weekly plan.
+					</p>
+				{/if}
+
+				<search-bar
+					label="Search recipes"
+					placeholder="Search recipes…"
+					value={browseQuery}
+				></search-bar>
+
+				<filter-chip-group
+					label="Filters"
+					use:ceBind={{ options: browseFilterOptions, selected: browseFilters }}
+				></filter-chip-group>
+
+				<p class="browse-status" aria-live="polite">
+					{#if browseShowLoading}
+						<LoadingIndicator label="Loading recipes…" />
+					{:else if browseVisibleRecipes.length > 0}
+						{browseVisibleRecipes.length} recipe{browseVisibleRecipes.length === 1 ? '' : 's'}
+					{/if}
+				</p>
+
+				{#if browseVisibleRecipes.length === 0 && !browseLoading}
+					<empty-state
+						icon={data.browseError ? 'inbox' : 'search'}
+						message={data.browseError
+							? data.browseError
+							: browseMineOnly
+								? authStore.user
+									? 'No matching recipes in this browser yet.'
+									: 'Sign in to see recipes you have saved in this browser.'
+								: 'No recipes match that search. Try another term or clear filters.'}
+					>
+						{#if browseMineOnly && authStore.user && !data.browseError}
+							<a href="/recipe/new">Create a recipe</a>
+						{/if}
+					</empty-state>
+				{:else}
+					<recipe-grid columns={4} aria-busy={browseLoading ? 'true' : 'false'}>
+						{#each browseVisibleRecipes as recipe (recipe.id)}
+							<div
+								class="tray-item"
+								class:selected={pendingRecipeId === recipe.id}
+								role="group"
+								aria-label="Drag {recipe.title} onto a day"
+								draggable="true"
+								ondragstart={(event) => onDragStart(event, recipe.id)}
+							>
+								<recipe-card
+									recipe-id={recipe.id}
+									heading={recipe.title}
+									image={recipe.image ?? ''}
+									use:ceBind={{
+										tags: recipeTags(recipe),
+										cookTime: recipe.cookTimeMinutes ?? 0,
+										favorited: favoritesStore.isFavorited(recipe.id)
+									}}
+								></recipe-card>
+							</div>
+						{/each}
+					</recipe-grid>
+				{/if}
+			</section>
+		{/if}
 	</div>
 
 	<rf-modal
@@ -373,7 +649,7 @@
 		<label class="field">
 			Meal type
 			<select bind:value={assignMealType}>
-				{#each MEAL_TYPES as option (option.value)}
+				{#each MEAL_COLUMNS as option (option.value)}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>
@@ -410,70 +686,273 @@
 	.planner {
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
+		gap: 1rem;
 	}
 
-	.hero h1 {
-		margin: 0 0 0.4rem;
-		font-size: 2rem;
-		color: var(--rf-color-primary, #1f5c3a);
+	.planner-card {
+		background: var(--rf-color-surface, #fff);
+		border-radius: var(--rf-radius-2xl, 1.75rem);
+		padding: clamp(1.25rem, 2vw, 2rem);
+		box-shadow: var(--rf-shadow-md, 0 4px 12px rgb(28 25 23 / 8%));
 	}
 
-	.hero p,
-	.hint {
-		margin: 0;
-		opacity: 0.85;
-		max-width: 46rem;
-	}
-
-	.week-nav {
+	.planner-header {
 		display: flex;
-		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.75rem;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.planner-header h1 {
+		margin: 0;
+		font-family: var(--rf-font-display);
+		font-size: clamp(1.75rem, 3vw, 2.25rem);
+		font-weight: 700;
+		color: var(--rf-color-text, #1a1a1a);
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.ghost-btn {
+		font: inherit;
+		font-family: var(--rf-font-sans);
+		font-size: 0.9rem;
+		cursor: pointer;
+		border: 1px solid rgba(26, 26, 26, 0.15);
+		padding: 0.45rem 0.85rem;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--rf-color-text-muted, #78716c);
+	}
+
+	.week-controls {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+		flex-wrap: wrap;
 	}
 
 	.week-label {
-		display: flex;
-		flex-direction: column;
-		gap: 0.15rem;
-		min-width: 12rem;
+		font-family: var(--rf-font-sans);
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: var(--rf-color-text, #1a1a1a);
+		min-width: 9rem;
+		text-align: center;
 	}
 
-	.week-nav button,
-	.secondary {
+	.week-btn {
 		font: inherit;
+		font-family: var(--rf-font-sans);
+		cursor: pointer;
+		border: 1px solid rgba(26, 26, 26, 0.12);
+		background: var(--rf-color-surface, #fff);
+		color: var(--rf-color-text, #1a1a1a);
+		width: 2rem;
+		height: 2rem;
+		border-radius: 999px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.week-btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.planner-tabs {
+		display: flex;
+		gap: clamp(1rem, 3vw, 2rem);
+		border-bottom: 1px solid var(--rf-color-border, #e7e5e4);
+		margin-bottom: 1.25rem;
+		overflow-x: auto;
+	}
+
+	.planner-tabs button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font: inherit;
+		font-family: var(--rf-font-sans);
+		font-size: 0.95rem;
+		font-weight: 600;
 		cursor: pointer;
 		border: none;
-		padding: 0.45rem 0.85rem;
-		background: var(--rf-color-primary, #1f5c3a);
+		background: none;
+		padding: 0.65rem 0 0.75rem;
+		color: var(--rf-color-text-muted, #78716c);
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.planner-tabs button.active {
+		color: var(--rf-color-primary, #1f5c3a);
+		border-bottom-color: var(--rf-color-primary, #1f5c3a);
+	}
+
+	.tab-icon {
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	.meal-grid {
+		display: grid;
+		grid-template-columns: minmax(2.5rem, auto) repeat(3, minmax(0, 1fr));
+		gap: 0.85rem 1rem;
+		align-items: stretch;
+	}
+
+	.grid-corner {
+		min-height: 1px;
+	}
+
+	.meal-col-header {
+		text-align: center;
+		font-family: var(--rf-font-display);
+		font-style: italic;
+		font-size: clamp(1.1rem, 2vw, 1.45rem);
+		font-weight: 500;
+		color: var(--rf-color-meal-header, #9a7b5a);
+		padding-bottom: 0.15rem;
+	}
+
+	.day-label {
+		display: flex;
+		align-items: center;
+		font-family: var(--rf-font-sans);
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: var(--rf-color-text, #1a1a1a);
+		padding-right: 0.35rem;
+	}
+
+	.meal-cell {
+		min-width: 0;
+	}
+
+	.meal-cell--over .meal-card,
+	.meal-cell--target .meal-card {
+		outline: 2px solid var(--rf-color-primary, #1f5c3a);
+		outline-offset: 2px;
+	}
+
+	.meal-card {
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		border: none;
+		border-radius: var(--rf-radius-xl, 1.25rem);
+		overflow: hidden;
+		position: relative;
+	}
+
+	.meal-card.empty {
+		cursor: pointer;
+		background: var(--rf-color-cell-empty, #f0ece4);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: rgba(26, 26, 26, 0.28);
+		font-size: 1.75rem;
+		font-weight: 300;
+		transition: background-color 120ms ease;
+	}
+
+	.meal-card.empty:hover {
+		background: color-mix(in srgb, var(--rf-color-primary, #1f5c3a) 8%, var(--rf-color-cell-empty, #f0ece4));
+		color: var(--rf-color-primary, #1f5c3a);
+	}
+
+	.meal-card.filled {
+		background-color: #d6d0c4;
+		background-size: cover;
+		background-position: center;
+	}
+
+	.meal-card__shade {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(to top, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.08) 55%, transparent 100%);
+	}
+
+	.meal-card__title {
+		position: absolute;
+		left: 0.75rem;
+		right: 0.75rem;
+		bottom: 0.65rem;
+		margin: 0;
+		font-family: var(--rf-font-sans);
+		font-size: 0.88rem;
+		font-weight: 600;
+		line-height: 1.25;
 		color: #fff;
+		z-index: 1;
+		overflow-wrap: anywhere;
 	}
 
-	.secondary {
-		background: transparent;
-		color: #1a1a1a;
-		border: 1px solid rgba(26, 26, 26, 0.2);
-		margin-left: auto;
+	.meal-card__remove {
+		position: absolute;
+		top: 0.45rem;
+		right: 0.45rem;
+		z-index: 2;
+		width: 1.65rem;
+		height: 1.65rem;
+		border: none;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.88);
+		color: var(--rf-color-text-muted, #78716c);
+		font-size: 0.75rem;
+		cursor: pointer;
+		opacity: 0;
+		transition: opacity 120ms ease;
 	}
 
-	.linkish {
-		align-self: flex-start;
-		background: none !important;
-		color: var(--rf-color-primary, #1f5c3a) !important;
-		padding: 0 !important;
-		text-decoration: underline;
+	.meal-card.filled:hover .meal-card__remove,
+	.meal-card__remove:focus-visible {
+		opacity: 1;
 	}
 
-	.tray h2 {
-		margin: 0 0 0.35rem;
-		font-size: 1.2rem;
-	}
-
-	.tray {
+	.recipe-panel {
 		display: flex;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 0.85rem;
+	}
+
+	.recipe-panel__hint {
+		margin: 0;
+		font-family: var(--rf-font-sans);
+		font-size: 0.92rem;
+		color: var(--rf-color-text-muted, #78716c);
+	}
+
+	.browse-status {
+		margin: 0;
+		min-height: 1.25rem;
+		font-family: var(--rf-font-sans);
+		font-size: 0.9rem;
+		color: var(--rf-color-text-muted, #78716c);
+	}
+
+	.link-btn {
+		font: inherit;
+		font-family: var(--rf-font-sans);
+		cursor: pointer;
+		border: none;
+		background: none;
+		padding: 0;
+		color: var(--rf-color-primary, #1f5c3a);
+		text-decoration: underline;
 	}
 
 	.tray-item {
@@ -483,30 +962,7 @@
 	.tray-item.selected {
 		outline: 2px solid var(--rf-color-primary, #1f5c3a);
 		outline-offset: 3px;
-	}
-
-	.week {
-		display: grid;
-		grid-template-columns: repeat(7, minmax(11.5rem, 1fr));
-		gap: 1rem;
-		align-items: stretch;
-	}
-
-	.week :global(day-column) {
-		min-width: 0;
-	}
-
-	.week :global(day-column)::part(root) {
-		min-height: 14rem;
-	}
-
-	.week :global(day-column)::part(meal) {
-		flex-direction: column;
-		align-items: stretch;
-	}
-
-	.week :global(day-column)::part(remove) {
-		align-self: flex-start;
+		border-radius: var(--rf-radius-md, 0.5rem);
 	}
 
 	.modal-copy {
@@ -544,19 +1000,22 @@
 		color: var(--rf-color-primary, #1f5c3a);
 	}
 
-	@media (max-width: 56rem) {
-		.week {
-			display: flex;
-			gap: 1rem;
-			overflow-x: auto;
-			padding-bottom: 0.35rem;
-			scroll-snap-type: x proximity;
-			-webkit-overflow-scrolling: touch;
+	@media (max-width: 52rem) {
+		.meal-grid {
+			grid-template-columns: minmax(2rem, auto) repeat(3, minmax(5.5rem, 1fr));
+			gap: 0.55rem 0.45rem;
 		}
 
-		.week :global(day-column) {
-			flex: 0 0 min(14rem, 78vw);
-			scroll-snap-align: start;
+		.meal-col-header {
+			font-size: 0.95rem;
+		}
+
+		.day-label {
+			font-size: 0.82rem;
+		}
+
+		.meal-card__title {
+			font-size: 0.72rem;
 		}
 	}
 </style>

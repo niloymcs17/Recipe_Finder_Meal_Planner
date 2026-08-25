@@ -2,7 +2,7 @@ import { describe, expect, h, it, render } from '@stencil/vitest';
 
 describe('toast-notification', () => {
   it('renders message for each type', async () => {
-    for (const type of ['success', 'error', 'info'] as const) {
+    for (const type of ['success', 'error', 'info', 'warn'] as const) {
       const { root } = await render(
         <toast-notification message={`${type} toast`} type={type} duration={60_000} />,
       );

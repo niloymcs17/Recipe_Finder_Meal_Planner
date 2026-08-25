@@ -4,11 +4,11 @@
 	import {
 		emptyRecipeForm,
 		formFromLocalRecipe,
-		parseRecipeForm,
 		type FieldErrors,
 		type RecipeFormFields,
 		type RecipeWritePayload
 	} from '$lib/validation/recipe';
+	import { validateRecipeOnServer } from '$lib/api/user-recipes';
 	import type { Recipe as LocalRecipe } from '$lib/local-db/types';
 	import { toastStore } from '$lib/stores/toast.svelte';
 	import { toUserId } from '$lib/utils/ids';
@@ -126,16 +126,17 @@
 		event.preventDefault();
 		errors = {};
 		submitting = true;
-		const parsed = parseRecipeForm(form);
-		if (!parsed.ok) {
-			errors = parsed.errors;
-			toastStore.show('Please fix the highlighted fields.', 'error');
+
+		const validated = await validateRecipeOnServer(form);
+		if (!validated.ok) {
+			errors = validated.errors;
+			toastStore.show(validated.errors._form ?? 'Please fix the highlighted fields.', 'error');
 			submitting = false;
 			return;
 		}
 
 		try {
-			await onSave(parsed.data);
+			await onSave(validated.data);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Could not save recipe.';
 			if (message === 'Forbidden') {
@@ -159,6 +160,9 @@
 </script>
 
 <form bind:this={formEl} class="recipe-form" novalidate onsubmit={handleSubmit}>
+	{#if errors._form}
+		<p class="form-error" role="alert">{errors._form}</p>
+	{/if}
 	<form-input
 		label="Title"
 		name="title"
@@ -304,6 +308,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.1rem;
+	}
+
+	.form-error {
+		margin: 0;
+		color: #8b1e1e;
+		background: rgba(139, 30, 30, 0.08);
+		padding: 0.75rem;
+		border-left: 3px solid #8b1e1e;
 	}
 
 	.row {

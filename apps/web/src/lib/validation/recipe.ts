@@ -140,3 +140,32 @@ export function parseRecipeForm(
 		}
 	};
 }
+
+/** Server-side entry point: validate arbitrary JSON request bodies. */
+export function parseRecipeFormFromJson(
+	body: unknown
+): { ok: true; data: RecipeWritePayload } | { ok: false; errors: FieldErrors } {
+	if (!body || typeof body !== 'object' || Array.isArray(body)) {
+		return { ok: false, errors: { _form: 'Invalid request body.' } };
+	}
+
+	const candidate = body as Partial<RecipeFormFields>;
+	if (!Array.isArray(candidate.ingredients) || !Array.isArray(candidate.steps)) {
+		return { ok: false, errors: { _form: 'Invalid recipe form.' } };
+	}
+
+	return parseRecipeForm({
+		title: typeof candidate.title === 'string' ? candidate.title : '',
+		imageUrl: typeof candidate.imageUrl === 'string' ? candidate.imageUrl : '',
+		category: typeof candidate.category === 'string' ? candidate.category : '',
+		area: typeof candidate.area === 'string' ? candidate.area : '',
+		cookTimeMinutes:
+			typeof candidate.cookTimeMinutes === 'string' ? candidate.cookTimeMinutes : '',
+		servings: typeof candidate.servings === 'string' ? candidate.servings : '',
+		ingredients: candidate.ingredients.map((row) => ({
+			name: typeof row?.name === 'string' ? row.name : '',
+			quantity: typeof row?.quantity === 'string' ? row.quantity : ''
+		})),
+		steps: candidate.steps.map((step) => (typeof step === 'string' ? step : ''))
+	});
+}

@@ -8,6 +8,14 @@
 	--rf-color-primary: #1f5c3a;
 	--rf-color-primary-contrast: #ffffff;
 	--rf-color-bg: #f7f5f0;
+	--rf-color-meal-header: #9a7b5a;
+	--rf-color-cell-empty: #f0ece4;
+	--rf-color-success: #1f5c3a;
+	--rf-color-success-text: #14532d;
+	--rf-color-success-bg: #e8f3ec;
+	--rf-color-success-border: #9fd4b3;
 	--rf-font-display: Georgia, 'Times New Roman', serif;
-	--rf-font-sans: Georgia, 'Times New Roman', serif;
+	--rf-font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+	--rf-radius-xl: 1.25rem;
+	--rf-radius-2xl: 1.75rem;
 }

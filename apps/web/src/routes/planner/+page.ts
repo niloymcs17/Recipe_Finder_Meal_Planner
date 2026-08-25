@@ -3,7 +3,7 @@ import type { PageLoad } from './$types';
 
 export const ssr = false;
 
-export const load: PageLoad = ({ url }) => {
+export const load: PageLoad = ({ data, url }) => {
 	requireLocalUser(url.pathname);
-	return {};
+	return data;
 };

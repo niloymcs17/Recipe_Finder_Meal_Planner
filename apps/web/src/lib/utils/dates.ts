@@ -20,6 +20,16 @@ export const WEEK_DAY_LABELS: Record<WeekDay, string> = {
 	sunday: 'Sunday'
 };
 
+export const WEEK_DAY_SHORT: Record<WeekDay, string> = {
+	monday: 'Mon',
+	tuesday: 'Tue',
+	wednesday: 'Wed',
+	thursday: 'Thu',
+	friday: 'Fri',
+	saturday: 'Sat',
+	sunday: 'Sun'
+};
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isIsoDate(value: string): boolean {
