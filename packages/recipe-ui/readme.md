@@ -1,35 +1,28 @@
 # `@recipe-finder/ui`
 
-Stencil custom-elements library for Recipe Finder & Meal Planner. Presentational components only; theming via CSS custom properties (`--rf-*`).
+Stencil custom-elements library for recipe browsing and meal planning UIs. Components are **presentational only** — they do not fetch data or persist state. Theme with CSS custom properties (`--rf-*`).
 
-## Scripts (from monorepo root)
+## Install
 
 ```bash
-pnpm --filter @recipe-finder/ui start   # Stencil www preview
-pnpm --filter @recipe-finder/ui build   # production dist + custom-elements
-pnpm --filter @recipe-finder/ui test
+npm install @recipe-finder/ui
+# or
+pnpm add @recipe-finder/ui
+# or
+yarn add @recipe-finder/ui
 ```
 
-Or from this package: `pnpm start` / `pnpm build`.
+Requires a modern browser with [Custom Elements](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements) support.
 
-## Build outputs
+## Quick start
 
-| Path | Purpose |
-| --- | --- |
-| `dist/` | Library bundle + collection |
-| `dist/components/` | **Custom elements** (`dist-custom-elements`, `bundle` export) |
-| `loader/` | Lazy `defineCustomElements` from the `dist` target |
-| `dist/recipe-ui/recipe-ui.css` | Bundled global theme tokens (`@recipe-finder/ui/global.css`) |
+**1. Load theme tokens** (once in your app entry or global CSS):
 
-Published tarball includes only `dist/` and `loader/` (see `"files"` in `package.json`).
+```css
+@import '@recipe-finder/ui/global.css';
+```
 
-## Consume in the monorepo (day-to-day)
-
-`apps/web` depends on `"@recipe-finder/ui": "workspace:*"`. Root `pnpm build` builds UI before web so `dist` exists for CI/deploy.
-
-## Register custom elements (SvelteKit)
-
-Preferred one-shot registration from the custom-elements bundle:
+**2. Register custom elements** (once, in the browser):
 
 ```ts
 import { defineCustomElements } from '@recipe-finder/ui';
@@ -37,7 +30,39 @@ import { defineCustomElements } from '@recipe-finder/ui';
 defineCustomElements();
 ```
 
-Lazy loader alternative:
+**3. Use components in HTML or your framework:**
+
+```html
+<recipe-card
+  heading="Pasta Primavera"
+  image="https://example.com/pasta.jpg"
+  cook-time="25 min"
+  rating="4"
+  favorited="false"
+></recipe-card>
+```
+
+## Package exports
+
+| Import | Purpose |
+| --- | --- |
+| `@recipe-finder/ui` | Register all components (`defineCustomElements`) |
+| `@recipe-finder/ui/loader` | Lazy loader variant of `defineCustomElements` |
+| `@recipe-finder/ui/global.css` | Design tokens and base component styles |
+
+## Register custom elements
+
+Call `defineCustomElements()` **once** when your app loads in the browser. Do not register on every route or during server-side rendering.
+
+**Eager (recommended):**
+
+```ts
+import { defineCustomElements } from '@recipe-finder/ui';
+
+defineCustomElements();
+```
+
+**Lazy loader:**
 
 ```ts
 import { defineCustomElements } from '@recipe-finder/ui/loader';
@@ -45,75 +70,107 @@ import { defineCustomElements } from '@recipe-finder/ui/loader';
 defineCustomElements();
 ```
 
-Call **once** in the browser (root layout via `$lib/ui/register.ts` — `browser` guard + dynamic import). Do not register per route.
+### Framework notes
 
-### SSR / Vite notes (chosen approach)
+**React / Next.js** — register in a client-only module (e.g. `useEffect` or a `"use client"` bootstrap file).
 
-1. Register only on the client (`browser` / `onMount` + dynamic `import('@recipe-finder/ui')`) so Node never executes CE `define` during SSR.
-2. In `apps/web/vite.config.ts`, set `ssr.noExternal: ['@recipe-finder/ui']` so Vite can resolve the package if it is pulled into the SSR graph, and `optimizeDeps.include` for the client prebundle.
+**SvelteKit / Vite SSR** — register only on the client (`onMount`, `browser` guard, or dynamic `import()`). If the package is pulled into the SSR graph, add `@recipe-finder/ui` to `ssr.noExternal` in `vite.config.ts` and include it in `optimizeDeps.include` for the client bundle.
+
+**Plain HTML** — load the bundle and call `defineCustomElements()` from a `<script type="module">` before using tags.
 
 ## Theming
 
-Tokens live only in `src/global/global.css` and ship as `@recipe-finder/ui/global.css`.
-
-Load the stylesheet once in the host app, then override any `--rf-*` variable on `:root` or `html`:
+All visual tokens are CSS variables prefixed with `--rf-*`. Import the global stylesheet, then override tokens on `:root` or `html`:
 
 ```css
 @import '@recipe-finder/ui/global.css';
 
 :root {
   --rf-color-primary: #1f5c3a;
-  --rf-font-sans: 'Your Font', sans-serif;
+  --rf-font-sans: 'Your Font', system-ui, sans-serif;
+  --rf-radius-md: 0.5rem;
 }
 ```
 
-Dark mode:
+**Dark mode**
 
-- Automatic: `@media (prefers-color-scheme: dark)` when `data-theme` is unset
+- Automatic: follows `prefers-color-scheme: dark` when `data-theme` is not set on `<html>`
 - Explicit: set `data-theme="dark"` or `data-theme="light"` on `<html>`
-
-## Publish to npm (assignment / demo)
-
-Local development stays on `workspace:*`. Publish only when you need a public package (demo, external consumer). No tokens or secrets belong in this repo — use `npm login` on your machine.
-
-```bash
-# 1. Build artifacts
-pnpm --filter @recipe-finder/ui build
-
-# 2. Bump version in packages/recipe-ui/package.json (keep 0.x while unstable)
-
-# 3. Allow publish (package is "private": true in the monorepo)
-#    Temporarily set "private": false, or remove the field.
-
-# 4. Publish
-cd packages/recipe-ui
-npm publish --access public
-```
-
-Consumers then install `@recipe-finder/ui` from npm instead of `workspace:*`. Switch back to workspace linking for local monorepo work.
-
-**Graders / monorepo demos:** keep `"@recipe-finder/ui": "workspace:*"` in `apps/web/package.json` and run `pnpm build` from the repo root — no npm publish required.
-
-## Utils
-
-- `debounce` — shared helper for search-bar internal debounce (~300–400ms). Source: `src/utils/debounce.ts`.
 
 ## Components
 
 | Tag | Key props | Events |
 | --- | --- | --- |
-| `recipe-card` | `heading` (display title), `image`, `cookTime`, `tags`, `rating`, `recipeId?`, `favorited` | `recipeSelect`, `favoriteToggle` |
-| `recipe-grid` | `columns` | — (default slot) |
-| `search-bar` | `placeholder`, `value`, `label` | `searchChange` (debounced), `searchSubmit` |
+| `recipe-card` | `heading`, `image`, `cookTime`, `tags`, `rating`, `recipeId?`, `favorited` | `recipeSelect`, `favoriteToggle` |
+| `recipe-grid` | `columns` | — (default slot for cards) |
+| `search-bar` | `placeholder`, `value`, `label` | `searchChange` (debounced ~300–400ms), `searchSubmit` |
 | `filter-chip-group` | `options`, `selected`, `label` | `filterChange` |
 | `rating-stars` | `value`, `readonly` (integer 1–5) | `ratingChange` |
 | `empty-state` | `message`, `icon` | — (action slot) |
 | `form-input` | `label`, `value`, `error`, `required`, `type`, `name`, `disabled` | `valueChange` |
-| `rf-modal` | `open`, `heading` (plan: title), `confirmLabel`, `cancelLabel` | `close`, `confirm` |
-| `toast-notification` | `message`, `type` (`success`\|`error`\|`info`), `visible`, auto-dismiss **3500ms** | — |
+| `rf-modal` | `open`, `heading`, `confirmLabel`, `cancelLabel` | `close`, `confirm` |
+| `toast-notification` | `message`, `type` (`success` \| `error` \| `info`), `visible` | auto-dismiss after **3500ms** |
 | `day-column` | `day`, `label`, `meals` (`{ id, title, recipeId? }[]`), `pendingRecipeId` | `mealDrop`, `mealRemove` |
 
-`rf-modal` uses a hyphenated tag (custom elements require one); source folder remains `modal/`.
-`day-column` `mealDrop` payload `{ recipeId, day }` is identical for HTML5 drag-and-drop and the tap “Assign here” fallback.
+Notes:
 
-Preview: `pnpm --filter @recipe-finder/ui start` then open the Stencil www page.
+- `rf-modal` uses a hyphenated tag name (required for custom elements).
+- `day-column` emits `mealDrop` with `{ recipeId, day }` for both drag-and-drop and the tap “Assign here” fallback.
+
+## Usage examples
+
+### Recipe card with events
+
+```html
+<recipe-card id="card"></recipe-card>
+
+<script>
+  const card = document.getElementById('card');
+  card.heading = 'Tomato Soup';
+  card.cookTime = '20 min';
+  card.rating = 5;
+
+  card.addEventListener('recipeSelect', (e) => {
+    console.log('Selected', e.detail);
+  });
+
+  card.addEventListener('favoriteToggle', (e) => {
+    console.log('Favorite toggled', e.detail);
+  });
+</script>
+```
+
+### Search bar (controlled value)
+
+```html
+<search-bar placeholder="Search recipes…" value="pasta"></search-bar>
+
+<script>
+  const bar = document.querySelector('search-bar');
+  bar.addEventListener('searchChange', (e) => {
+    console.log('Debounced query', e.detail);
+  });
+</script>
+```
+
+### Meal planner column
+
+```html
+<day-column day="monday" label="Monday"></day-column>
+
+<script>
+  const col = document.querySelector('day-column');
+  col.meals = [
+    { id: '1', title: 'Oatmeal', recipeId: 'r1' },
+    { id: '2', title: 'Salad', recipeId: 'r2' }
+  ];
+
+  col.addEventListener('mealDrop', (e) => {
+    console.log('Assign meal', e.detail); // { recipeId, day }
+  });
+</script>
+```
+
+## License
+
+MIT
