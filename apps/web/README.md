@@ -22,7 +22,7 @@ User recipes are saved in **this browser’s localStorage**. Refresh keeps them;
 
 ## Stencil UI
 
-Depends on `@recipe-finder/ui` via `workspace:*`.
+Depends on `@recipe-finder/ui@1.0.1` from npm.
 
 - **Registration:** `$lib/ui/register.ts` is called once from `+layout.svelte` (`onMount`, browser-only).
 - **Theme:** `src/app.css` imports `@recipe-finder/ui/global.css` and overrides a few `--rf-*` tokens.
@@ -35,15 +35,13 @@ pnpm --filter @recipe-finder/web dev
 
 ## Build & deploy
 
-
-
 ```bash
 pnpm --filter @recipe-finder/ui build
 pnpm --filter @recipe-finder/web build
 pnpm --filter @recipe-finder/web preview   # local production preview
 ```
 
-Set `MEALDB_BASE_URL` in the host env dashboard if you need a non-default TheMealDB endpoint.
+**Netlify:** see [`netlify.toml`](../../netlify.toml) at the monorepo root (`pnpm build`, publish `apps/web/build`, Node 20, `MEALDB_BASE_URL`). Override env vars in the Netlify dashboard if needed.
 
 ## UX polish (Phase 10)
 

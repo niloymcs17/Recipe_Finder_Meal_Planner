@@ -32,3 +32,6 @@ Thumbs.db
 # Misc
 *.tsbuildinfo
 .turbo/
+
+# Local Netlify folder
+.netlify
