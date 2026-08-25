@@ -3,10 +3,9 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [sveltekit()],
-	// Bundle @recipe-finder/ui for SSR so Vite does not treat Stencil CEs as a Node external.
-	// Registration itself still runs only in the browser via `$lib/ui/register`.
+	// Bundle SSR deps for Netlify functions (pnpm monorepo + manual CLI deploy).
 	ssr: {
-		noExternal: ['@recipe-finder/ui']
+		noExternal: true
 	},
 	optimizeDeps: {
 		include: ['@recipe-finder/ui']

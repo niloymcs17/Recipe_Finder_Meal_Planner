@@ -97,14 +97,16 @@ After deploy, each visitor’s browser keeps its own localStorage data — same 
 
 **Git connect:** import the repo on Netlify — settings are read from `netlify.toml` automatically.
 
-**Without Git:** install [Netlify CLI](https://docs.netlify.com/cli/get-started/), then from the repo root:
+**Without Git:** install [Netlify CLI](https://docs.netlify.com/cli/get-started/), then:
 
 ```bash
 netlify login
 netlify init
-pnpm build
+pnpm --filter @recipe-finder/web build
 netlify deploy --prod --no-build
 ```
+
+Run `netlify deploy` from the **repo root** (where `netlify.toml` lives). If you are in `apps/web`, use `netlify deploy --prod --no-build --dir=build` instead.
 
 ## Links
 

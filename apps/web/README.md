@@ -41,7 +41,7 @@ pnpm --filter @recipe-finder/web build
 pnpm --filter @recipe-finder/web preview   # local production preview
 ```
 
-**Netlify:** see [`netlify.toml`](../../netlify.toml) at the monorepo root (`pnpm build`, publish `apps/web/build`, Node 20, `MEALDB_BASE_URL`). Override env vars in the Netlify dashboard if needed.
+**Netlify:** see [`netlify.toml`](../../netlify.toml) at the monorepo root. Uses `@sveltejs/adapter-netlify`. After `pnpm --filter @recipe-finder/web build`, run `netlify deploy --prod --no-build` from this directory (`apps/web`).
 
 ## UX polish (Phase 10)
 

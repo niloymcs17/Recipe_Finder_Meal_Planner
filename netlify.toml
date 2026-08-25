@@ -1,0 +1,11 @@
+[build]
+  command = "corepack enable && pnpm install && pnpm --filter @recipe-finder/web build"
+  publish = "apps/web/build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  MEALDB_BASE_URL = "https://www.themealdb.com/api/json/v1/1"
+
+[functions]
+  directory = "apps/web/.netlify/functions-internal"
+  node_bundler = "esbuild"
