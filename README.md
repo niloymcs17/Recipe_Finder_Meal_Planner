@@ -74,6 +74,47 @@ To work on the Stencil library with live reload:
 pnpm dev:ui
 ```
 
+### Connect `@recipe-finder/ui` locally (monorepo)
+
+`apps/web` pins **`@recipe-finder/ui@1.0.1`** from npm so deploys and clones without the workspace still resolve the published package. To develop against the **local** Stencil library in `packages/recipe-ui`, link the workspace package:
+
+1. In `apps/web/package.json`, change the dependency:
+
+```json
+"@recipe-finder/ui": "workspace:*"
+```
+
+2. Reinstall from the repo root:
+
+```bash
+pnpm install
+```
+
+3. Build the UI once (or keep the Stencil dev server running):
+
+```bash
+pnpm --filter @recipe-finder/ui build
+# or, for live component reload:
+pnpm dev:ui
+```
+
+4. Start the web app:
+
+```bash
+pnpm dev:web
+```
+
+pnpm will resolve `@recipe-finder/ui` to `packages/recipe-ui` instead of npm. Edit components under `packages/recipe-ui/src/`; after Stencil rebuilds, refresh the SvelteKit app to see changes.
+
+**Two-terminal workflow (UI + web):**
+
+| Terminal | Command |
+|----------|---------|
+| 1 | `pnpm dev:ui` — Stencil watch/build |
+| 2 | `pnpm dev:web` — SvelteKit dev server |
+
+**Switch back to npm** before deploy or when testing the published package — set `"@recipe-finder/ui": "1.0.1"` again and run `pnpm install`. See [docs/publish-ui-package.md](./docs/publish-ui-package.md) for publishing.
+
 | Command | Description |
 |---------|-------------|
 | `pnpm dev:web` | SvelteKit app (`@recipe-finder/web`) |
@@ -91,22 +132,6 @@ pnpm --filter @recipe-finder/web preview
 
 After deploy, each visitor’s browser keeps its own localStorage data — same as local dev. Data does not sync across browsers or devices.
 
-## Deploy (Netlify)
-
-[`netlify.toml`](./netlify.toml) at the repo root configures build, publish directory, Node version, and `MEALDB_BASE_URL`.
-
-**Git connect:** import the repo on Netlify — settings are read from `netlify.toml` automatically.
-
-**Without Git:** install [Netlify CLI](https://docs.netlify.com/cli/get-started/), then:
-
-```bash
-netlify login
-netlify init
-pnpm --filter @recipe-finder/web build
-netlify deploy --prod --no-build
-```
-
-Run `netlify deploy` from the **repo root** (where `netlify.toml` lives). If you are in `apps/web`, use `netlify deploy --prod --no-build --dir=build` instead.
 
 ## Links
 

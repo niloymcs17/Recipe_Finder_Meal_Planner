@@ -16,11 +16,6 @@ This project is a **local-first demo**, not a production multi-user service.
 - **Auth is demo-grade**, not production security (password hashing via Web Crypto in the client; no server-side identity provider).
 - **Do not treat this as real multi-user security** — suitable for learning and single-browser use, not for protecting sensitive accounts.
 
-## Architecture
-
-- **The SvelteKit server does not own user data** — it proxies TheMealDB; CRUD for recipes, favorites, and planner happens in client-side repositories (`apps/web/src/lib/local-db/`).
-- **Svelte rune stores are a UI cache** — repositories write to localStorage; stores hydrate from them and roll back on failure.
-- **Ownership is implicit** — rows belong to whoever is signed in on this browser; repositories filter by `userId` / `ownerId` from the session, never from untrusted form fields alone.
 
 ## Environment and tooling
 
