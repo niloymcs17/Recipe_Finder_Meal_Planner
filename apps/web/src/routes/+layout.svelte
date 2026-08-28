@@ -7,7 +7,9 @@
 	import { favoritesStore } from '$lib/stores/favorites.svelte';
 	import { plannerStore } from '$lib/stores/planner.svelte';
 	import { toastStore } from '$lib/stores/toast.svelte';
+	import { themeStore } from '$lib/stores/theme.svelte';
 	import { ceBind } from '$lib/ui/ce-bind';
+	import ThemeToggle from '$lib/ui/ThemeToggle.svelte';
 	import { registerRecipeUi } from '$lib/ui/register';
 	import '../app.css';
 
@@ -75,6 +77,7 @@
 
 	// Register Stencil CEs once for every route (browser-only; SSR-safe).
 	onMount(() => {
+		themeStore.hydrate();
 		void registerRecipeUi();
 
 		function handleDocumentClick(event: MouseEvent) {
@@ -139,16 +142,20 @@
 		</span>
 	</a>
 
-	<button
-		type="button"
-		class="nav-toggle"
-		onclick={toggleMobileNav}
-		aria-expanded={mobileNavOpen}
-		aria-controls="site-nav"
-		aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-	>
-		<span class="nav-toggle-icon" aria-hidden="true"></span>
-	</button>
+	<div class="header-actions">
+		<ThemeToggle />
+
+		<button
+			type="button"
+			class="nav-toggle"
+			onclick={toggleMobileNav}
+			aria-expanded={mobileNavOpen}
+			aria-controls="site-nav"
+			aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+		>
+			<span class="nav-toggle-icon" aria-hidden="true"></span>
+		</button>
+	</div>
 
 	<nav id="site-nav" class:open={mobileNavOpen} aria-label="Main">
 		{#if authStore.ready && authStore.user}
@@ -218,12 +225,27 @@
 	:global(body) {
 		margin: 0;
 		font-family: Georgia, 'Times New Roman', serif;
-		color: #1a1a1a;
+		color: var(--rf-color-text);
 		background:
-			radial-gradient(ellipse at top left, rgba(46, 125, 80, 0.08), transparent 45%),
-			radial-gradient(ellipse at bottom right, rgba(180, 120, 40, 0.06), transparent 40%),
-			#f7f5f0;
+			radial-gradient(
+				ellipse at top left,
+				var(--rf-color-bg-gradient-start),
+				transparent 45%
+			),
+			radial-gradient(
+				ellipse at bottom right,
+				var(--rf-color-bg-gradient-end),
+				transparent 40%
+			),
+			var(--rf-color-bg);
 		min-height: 100vh;
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin-left: auto;
 	}
 
 	.site-header {
@@ -321,9 +343,9 @@
 		margin: 0;
 		padding: 0.55rem 1.5rem;
 		font-size: 0.85rem;
-		background: rgba(31, 92, 58, 0.08);
-		border-bottom: 1px solid rgba(31, 92, 58, 0.12);
-		color: #1a1a1a;
+		background: var(--rf-color-notice-bg);
+		border-bottom: 1px solid var(--rf-color-notice-border);
+		color: var(--rf-color-text);
 	}
 
 	.storage-notice strong {
@@ -528,6 +550,10 @@
 		.brand {
 			flex: 1;
 			min-width: 0;
+		}
+
+		.header-actions {
+			margin-left: 0;
 		}
 
 		.brand-tagline {

@@ -312,10 +312,10 @@
 
 	.form-error {
 		margin: 0;
-		color: #8b1e1e;
-		background: rgba(139, 30, 30, 0.08);
+		color: var(--rf-color-error-text, #8b1e1e);
+		background: var(--rf-color-error-bg, rgba(139, 30, 30, 0.08));
 		padding: 0.75rem;
-		border-left: 3px solid #8b1e1e;
+		border-left: 3px solid var(--rf-color-error-border, #8b1e1e);
 	}
 
 	.row {
@@ -332,7 +332,7 @@
 	.list {
 		margin: 0;
 		padding: 1rem;
-		border: 1px solid rgba(26, 26, 26, 0.12);
+		border: 1px solid color-mix(in srgb, var(--rf-color-text) 12%, transparent);
 		display: flex;
 		flex-direction: column;
 		gap: 0.85rem;
@@ -362,7 +362,7 @@
 
 	.list-error {
 		margin: 0;
-		color: #8b1e1e;
+		color: var(--rf-color-error-text, #8b1e1e);
 		font-size: 0.9rem;
 	}
 
@@ -382,7 +382,7 @@
 		font: inherit;
 		cursor: pointer;
 		background: var(--rf-color-primary, #1f5c3a);
-		color: #fff;
+		color: var(--rf-color-primary-contrast, #fff);
 		border: none;
 		padding: 0.55rem 1.1rem;
 	}

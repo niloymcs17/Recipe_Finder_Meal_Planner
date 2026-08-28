@@ -721,7 +721,7 @@
 		font-family: var(--rf-font-sans);
 		font-size: 0.9rem;
 		cursor: pointer;
-		border: 1px solid rgba(26, 26, 26, 0.15);
+		border: 1px solid color-mix(in srgb, var(--rf-color-text) 15%, transparent);
 		padding: 0.45rem 0.85rem;
 		border-radius: 999px;
 		background: transparent;
@@ -750,7 +750,7 @@
 		font: inherit;
 		font-family: var(--rf-font-sans);
 		cursor: pointer;
-		border: 1px solid rgba(26, 26, 26, 0.12);
+		border: 1px solid color-mix(in srgb, var(--rf-color-text) 12%, transparent);
 		background: var(--rf-color-surface, #fff);
 		color: var(--rf-color-text, #1a1a1a);
 		width: 2rem;
@@ -893,7 +893,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: rgba(26, 26, 26, 0.28);
+		color: color-mix(in srgb, var(--rf-color-text) 28%, transparent);
 		font-size: 1.75rem;
 		font-weight: 300;
 		transition: background-color 120ms ease;
@@ -905,7 +905,7 @@
 	}
 
 	.meal-card.filled {
-		background-color: #d6d0c4;
+		background-color: var(--rf-color-cell-filled, #d6d0c4);
 		background-size: cover;
 		background-position: center;
 	}
@@ -940,7 +940,7 @@
 		height: 1.65rem;
 		border: none;
 		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.88);
+		background: color-mix(in srgb, var(--rf-color-surface) 88%, transparent);
 		color: var(--rf-color-text-muted, #78716c);
 		font-size: 0.75rem;
 		cursor: pointer;

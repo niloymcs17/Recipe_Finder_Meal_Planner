@@ -291,7 +291,7 @@
 		max-height: 22rem;
 		object-fit: cover;
 		border-radius: 0.5rem;
-		background: #e8e4dc;
+		background: var(--rf-color-image-placeholder, #e8e4dc);
 	}
 
 	.source {
@@ -332,18 +332,19 @@
 		border: none;
 		padding: 0.45rem 0.9rem;
 		background: var(--rf-color-primary, #1f5c3a);
-		color: #fff;
+		color: var(--rf-color-primary-contrast, #fff);
 	}
 
 	.btn--danger {
-		background: #8b1e1e;
+		background: var(--rf-color-danger, #8b1e1e);
+		color: var(--rf-color-error-contrast, #fff);
 	}
 
 	.btn--ghost,
 	.btn:disabled {
 		background: transparent;
-		color: #1a1a1a;
-		border: 1px solid rgba(26, 26, 26, 0.2);
+		color: var(--rf-color-text);
+		border: 1px solid color-mix(in srgb, var(--rf-color-text) 20%, transparent);
 	}
 
 	.btn:disabled {

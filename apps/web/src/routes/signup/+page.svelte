@@ -77,7 +77,7 @@
 <style>
 	h1 {
 		margin-top: 0;
-		color: #1f5c3a;
+		color: var(--rf-color-primary, #1f5c3a);
 	}
 
 	form {
@@ -102,16 +102,17 @@
 	input {
 		font: inherit;
 		padding: 0.55rem 0.65rem;
-		border: 1px solid rgba(26, 26, 26, 0.2);
-		background: #fff;
+		border: 1px solid color-mix(in srgb, var(--rf-color-text) 20%, transparent);
+		background: var(--rf-color-surface, #fff);
+		color: var(--rf-color-text);
 	}
 
 	button {
 		font: inherit;
 		cursor: pointer;
 		align-self: flex-start;
-		background: #1f5c3a;
-		color: #fff;
+		background: var(--rf-color-primary, #1f5c3a);
+		color: var(--rf-color-primary-contrast, #fff);
 		border: none;
 		padding: 0.55rem 1.1rem;
 	}
@@ -122,10 +123,10 @@
 	}
 
 	.error {
-		color: #8b1e1e;
-		background: rgba(139, 30, 30, 0.08);
+		color: var(--rf-color-error-text, #8b1e1e);
+		background: var(--rf-color-error-bg, rgba(139, 30, 30, 0.08));
 		padding: 0.75rem;
-		border-left: 3px solid #8b1e1e;
+		border-left: 3px solid var(--rf-color-error-border, #8b1e1e);
 	}
 
 	.footer {
@@ -133,6 +134,6 @@
 	}
 
 	a {
-		color: #1f5c3a;
+		color: var(--rf-color-primary, #1f5c3a);
 	}
 </style>

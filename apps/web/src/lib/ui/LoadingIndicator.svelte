@@ -24,7 +24,7 @@
 	.spinner {
 		width: 1rem;
 		height: 1rem;
-		border: 2px solid rgba(31, 92, 58, 0.2);
+		border: 2px solid color-mix(in srgb, var(--rf-color-primary, #1f5c3a) 20%, transparent);
 		border-top-color: var(--rf-color-primary, #1f5c3a);
 		border-radius: 50%;
 		animation: spin 0.7s linear infinite;

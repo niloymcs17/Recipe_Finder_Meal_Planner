@@ -6,7 +6,8 @@ export const KEYS = {
 	session: 'rfmp:session',
 	recipes: 'rfmp:recipes',
 	favorites: 'rfmp:favorites',
-	mealPlan: 'rfmp:meal_plan'
+	mealPlan: 'rfmp:meal_plan',
+	theme: 'rfmp:theme'
 } as const;
 
 export type StorageMeta = {

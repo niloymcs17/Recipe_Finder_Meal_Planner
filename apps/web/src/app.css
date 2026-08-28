@@ -4,18 +4,67 @@
  */
 @import '@recipe-finder/ui/global.css';
 
-:root {
+html {
+	color-scheme: light dark;
+}
+
+:root,
+[data-theme='light'] {
 	--rf-color-primary: #1f5c3a;
 	--rf-color-primary-contrast: #ffffff;
 	--rf-color-bg: #f7f5f0;
 	--rf-color-meal-header: #9a7b5a;
 	--rf-color-cell-empty: #f0ece4;
+	--rf-color-cell-filled: #d6d0c4;
+	--rf-color-image-placeholder: #e8e4dc;
 	--rf-color-success: #1f5c3a;
 	--rf-color-success-text: #14532d;
 	--rf-color-success-bg: #e8f3ec;
 	--rf-color-success-border: #9fd4b3;
+	--rf-color-bg-gradient-start: rgba(46, 125, 80, 0.08);
+	--rf-color-bg-gradient-end: rgba(180, 120, 40, 0.06);
+	--rf-color-notice-bg: rgba(31, 92, 58, 0.08);
+	--rf-color-notice-border: rgba(31, 92, 58, 0.12);
 	--rf-font-display: Georgia, 'Times New Roman', serif;
 	--rf-font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
 	--rf-radius-xl: 1.25rem;
 	--rf-radius-2xl: 1.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--rf-color-primary: #6db88a;
+		--rf-color-primary-contrast: #0f2418;
+		--rf-color-bg: #1c1917;
+		--rf-color-meal-header: #c4a882;
+		--rf-color-cell-empty: #3d3835;
+		--rf-color-cell-filled: #57534e;
+		--rf-color-image-placeholder: #44403c;
+		--rf-color-success: #6db88a;
+		--rf-color-success-text: #dcfce7;
+		--rf-color-success-bg: #14532d;
+		--rf-color-success-border: #166534;
+		--rf-color-bg-gradient-start: rgba(109, 184, 138, 0.06);
+		--rf-color-bg-gradient-end: rgba(196, 168, 130, 0.04);
+		--rf-color-notice-bg: rgba(109, 184, 138, 0.1);
+		--rf-color-notice-border: rgba(109, 184, 138, 0.18);
+	}
+}
+
+[data-theme='dark'] {
+	--rf-color-primary: #6db88a;
+	--rf-color-primary-contrast: #0f2418;
+	--rf-color-bg: #1c1917;
+	--rf-color-meal-header: #c4a882;
+	--rf-color-cell-empty: #3d3835;
+	--rf-color-cell-filled: #57534e;
+	--rf-color-image-placeholder: #44403c;
+	--rf-color-success: #6db88a;
+	--rf-color-success-text: #dcfce7;
+	--rf-color-success-bg: #14532d;
+	--rf-color-success-border: #166534;
+	--rf-color-bg-gradient-start: rgba(109, 184, 138, 0.06);
+	--rf-color-bg-gradient-end: rgba(196, 168, 130, 0.04);
+	--rf-color-notice-bg: rgba(109, 184, 138, 0.1);
+	--rf-color-notice-border: rgba(109, 184, 138, 0.18);
 }
