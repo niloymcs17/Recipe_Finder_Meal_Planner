@@ -2,7 +2,8 @@
 
 pnpm monorepo for a SvelteKit app and a Stencil UI component library.
 
-**Live app:** [https://niloy-meal-planner.netlify.app](https://niloy-meal-planner.netlify.app)
+> [!IMPORTANT]
+> **Live app:** [https://niloy-meal-planner.netlify.app](https://niloy-meal-planner.netlify.app)
 
 Assumptions for this project (local-first demo, localStorage, TheMealDB, demo auth) live in **[docs/ASSUMPTIONS.md](./docs/ASSUMPTIONS.md)**.
 
