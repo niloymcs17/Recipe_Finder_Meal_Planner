@@ -138,6 +138,8 @@ After deploy, each visitor’s browser keeps its own localStorage data — same 
 - **Stencil UI library on npm:** [https://www.npmjs.com/package/@recipe-finder/ui](https://www.npmjs.com/package/@recipe-finder/ui)
 - **GitHub repository:** [https://github.com/niloymcs17/Recipe_Finder_Meal_Planner](https://github.com/niloymcs17/Recipe_Finder_Meal_Planner)
 - **Assumptions:** [docs/ASSUMPTIONS.md](./docs/ASSUMPTIONS.md)
+- **Architecture & flows:** [docs/architecture.md](./docs/architecture.md)
+- **SvelteKit + Stencil integration:** [docs/sveltekit-stencil-integration.md](./docs/sveltekit-stencil-integration.md)
 - **Server-side validation:** [docs/server-side-validation.md](./docs/server-side-validation.md)
 - **UI package usage:** [packages/recipe-ui/readme.md](./packages/recipe-ui/readme.md)
 - **Publishing the UI package:** [docs/publish-ui-package.md](./docs/publish-ui-package.md)
