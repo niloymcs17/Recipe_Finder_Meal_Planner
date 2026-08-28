@@ -134,24 +134,6 @@ These use Zod or checks in the browser / `localStorage` layer only. They are **n
 
 ---
 
-## Code map
-
-```
-apps/web/src/
-├── routes/api/
-│   ├── user-recipes/+server.ts    POST — recipe form validation
-│   ├── recipes/+server.ts         GET  — search query sanitization
-│   └── recipes/lookup/+server.ts  GET  — lookup id check
-├── lib/
-│   ├── validation/
-│   │   ├── recipe.ts              Zod schema + parseRecipeFormFromJson
-│   │   └── recipes-query.ts       Search param parsing
-│   ├── api/user-recipes.ts        Client fetch to POST /api/user-recipes
-│   └── server/env.ts              MEALDB_BASE_URL validation
-└── lib/recipes/RecipeForm.svelte  Submits to server before localStorage save
-```
-
----
 
 ## Related docs
 
